@@ -30,7 +30,7 @@ stages:
       displayName: Build and push an image to container registry
       inputs:
         command: buildAndPush
-        repository: $(storeImage)
+        repository: $(shoppingListImage)
         dockerfile: $(dockerfilePath)
         containerRegistry: $(acrServiceConnection)
         tags: |
