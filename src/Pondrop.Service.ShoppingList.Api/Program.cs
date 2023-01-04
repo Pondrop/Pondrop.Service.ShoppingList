@@ -10,7 +10,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Pondrop.Service.ShoppingList.Api.Configurations.Extensions;
 using Pondrop.Service.ShoppingList.Api.Middleware;
-using Pondrop.Service.ShoppingList.Api.Models;
 using Pondrop.Service.ShoppingList.Api.Services;
 using Pondrop.Service.ShoppingList.Api.Services.Interfaces;
 using Pondrop.Service.ShoppingList.Application.Models;
