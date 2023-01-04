@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Pondrop.Service.Events;
 using Pondrop.Service.Models;
 using Pondrop.Service.ShoppingList.Domain.Enums.ShoppingList;
+using Pondrop.Service.ShoppingList.Domain.Events.ListItem;
 using Pondrop.Service.ShoppingList.Domain.Events.ShoppingList;
 
 namespace Pondrop.Service.ShoppingList.Domain.Models;
@@ -23,7 +24,7 @@ public record ListItemEntity : EventEntity
         }
     }
 
-    public ListItemEntity(string itemTitle, Guid addedBy, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<string> selectedPreferenceIds, Guid selectedProductId, string createdBy) : this()
+    public ListItemEntity(string itemTitle, Guid addedBy, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, string createdBy) : this()
     {
         var create = new CreateListItem(Guid.NewGuid(), itemTitle, addedBy, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId);
         Apply(create, createdBy);
@@ -48,7 +49,7 @@ public record ListItemEntity : EventEntity
     public string ItemUOM { get; private set; }
 
     [JsonProperty(PropertyName = "selectedPreferenceIds")]
-    public List<string> SelectedPreferenceIds { get; private set; }
+    public List<Guid> SelectedPreferenceIds { get; private set; }
 
     [JsonProperty(PropertyName = "selectedProductId")]
     public Guid SelectedProductId { get; private set; }

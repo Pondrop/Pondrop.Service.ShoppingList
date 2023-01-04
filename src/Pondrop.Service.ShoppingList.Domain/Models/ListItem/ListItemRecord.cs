@@ -11,13 +11,14 @@ public record ListItemRecord(
     int Quantity,
     double ItemNetSize,
     string ItemUOM,
-    List<string> SelectedPreferenceIds,
+    List<Guid> SelectedPreferenceIds,
     Guid SelectedProductId,
         string CreatedBy,
         string UpdatedBy,
         DateTime CreatedUtc,
-        DateTime UpdatedUtc)
-    : AuditRecord(CreatedBy, UpdatedBy, CreatedUtc, UpdatedUtc)
+        DateTime UpdatedUtc,
+        DateTime? DeletedUtc)
+    : AuditRecord(CreatedBy, UpdatedBy, CreatedUtc, UpdatedUtc, DeletedUtc)
 {
     public ListItemRecord() : this(
         Guid.Empty,
@@ -27,12 +28,13 @@ public record ListItemRecord(
         0,
         0,
         string.Empty,
-        new List<string>(0),
+        new List<Guid>(),
         Guid.Empty,
         string.Empty,
         string.Empty,
         DateTime.MinValue,
-        DateTime.MinValue)
+        DateTime.MinValue,
+        null)
     {
     }
 }

@@ -13,7 +13,7 @@
     <PackageReference Include="MediatR" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-    <PackageReference Include="Pondrop.Service.Infrastructure" Version="1.0.1" />
+    <PackageReference Include="Pondrop.Service.Infrastructure" Version="1.0.6" />
   </ItemGroup>
 
   <ItemGroup>

@@ -18,7 +18,7 @@ public class CreateListItemCommand : IRequest<Result<ListItemRecord>>
 
     public string ItemUOM { get; init; } = string.Empty;
 
-    public List<string> SelectedPreferenceIds { get; init; } = new List<string>();
+    public List<Guid> SelectedPreferenceIds { get; init; } = new List<Guid>();
 
     public Guid SelectedProductId { get; init; } = Guid.Empty;
 

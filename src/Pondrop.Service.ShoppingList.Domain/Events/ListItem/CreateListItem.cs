@@ -1,6 +1,6 @@
 ﻿using Pondrop.Service.Events;
 
-namespace Pondrop.Service.ShoppingList.Domain.Events.ShoppingList;
+namespace Pondrop.Service.ShoppingList.Domain.Events.ListItem;
 public record CreateListItem(
     Guid Id,
     string ItemTitle,
@@ -9,6 +9,6 @@ public record CreateListItem(
     int Quantity,
     double ItemNetSize,
     string ItemUOM,
-    List<string> SelectedPreferenceIds,
+    List<Guid> SelectedPreferenceIds,
     Guid SelectedProductId
     ) : EventPayload;

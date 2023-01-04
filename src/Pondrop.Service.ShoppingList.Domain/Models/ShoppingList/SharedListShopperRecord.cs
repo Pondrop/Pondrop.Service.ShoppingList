@@ -13,8 +13,9 @@ public record ShoppingListRecord(
         string CreatedBy,
         string UpdatedBy,
         DateTime CreatedUtc,
-        DateTime UpdatedUtc)
-    : AuditRecord(CreatedBy, UpdatedBy, CreatedUtc, UpdatedUtc)
+        DateTime UpdatedUtc,
+        DateTime? DeletedUtc)
+    : AuditRecord(CreatedBy, UpdatedBy, CreatedUtc, UpdatedUtc, DeletedUtc)
 {
     public ShoppingListRecord() : this(
         Guid.Empty,
@@ -26,7 +27,8 @@ public record ShoppingListRecord(
         string.Empty,
         string.Empty,
         DateTime.MinValue,
-        DateTime.MinValue)
+        DateTime.MinValue,
+        null)
     {
     }
 }

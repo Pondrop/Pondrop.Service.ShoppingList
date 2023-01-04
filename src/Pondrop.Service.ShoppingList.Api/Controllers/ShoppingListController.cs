@@ -123,7 +123,7 @@ public class ShoppingListController : ControllerBase
     [Route("sharedlistshopper/add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> AddSharedListShopperToShoppingList([FromBody] AddListItemToShoppingListCommand command)
+    public async Task<IActionResult> AddSharedListShopperToShoppingList([FromBody] AddSharedListShopperShoppingListCommand command)
     {
         var result = await _mediator.Send(command);
         return await result.MatchAsync<IActionResult>(
@@ -139,7 +139,7 @@ public class ShoppingListController : ControllerBase
     [Route("sharedlistshopper/remove")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RemoveSharedListShopperToShoppingList([FromBody] RemoveListItemToShoppingListCommand command)
+    public async Task<IActionResult> RemoveSharedListShopperToShoppingList([FromBody] RemoveSharedListShopperToShoppingListCommand command)
     {
         var result = await _mediator.Send(command);
         return await result.MatchAsync<IActionResult>(

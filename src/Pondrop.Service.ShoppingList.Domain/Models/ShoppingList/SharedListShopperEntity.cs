@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Pondrop.Service.Events;
 using Pondrop.Service.Models;
 using Pondrop.Service.ShoppingList.Domain.Enums.ShoppingList;
+using Pondrop.Service.ShoppingList.Domain.Events.SharedListShopper;
 using Pondrop.Service.ShoppingList.Domain.Events.ShoppingList;
 
 namespace Pondrop.Service.ShoppingList.Domain.Models;

@@ -1,17 +1,8 @@
-using AspNetCore.Proxy;
-using AspNetCore.Proxy.Options;
-using Azure;
-using Azure.Search.Documents.Indexes;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.Net.Http.Headers;
 using Pondrop.Service.Interfaces;
-using Pondrop.Service.SharedListShopper.Application.Commands;
-using Pondrop.Service.ShoppingList.Api.Models;
 using Pondrop.Service.ShoppingList.Api.Services;
-using Pondrop.Service.ShoppingList.Api.Services.Interfaces;
 using Pondrop.Service.ShoppingList.Application.Commands;
 using Pondrop.Service.ShoppingList.Application.Queries;
 

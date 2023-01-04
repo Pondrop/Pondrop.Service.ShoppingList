@@ -5,7 +5,7 @@ using Pondrop.Service.Interfaces;
 using Pondrop.Service.ShoppingList.Application.Commands;
 using Pondrop.Service.ShoppingList.Domain.Models;
 
-namespace Pondrop.Service.SharedListShopper.Application.Commands;
+namespace Pondrop.Service.ShoppingList.Application.Commands;
 
 public class UpdateSharedListShopperCheckpointByIdCommandHandler : UpdateCheckpointByIdCommandHandler<UpdateSharedListShopperCheckpointByIdCommand, SharedListShopperEntity, SharedListShopperRecord>
 {

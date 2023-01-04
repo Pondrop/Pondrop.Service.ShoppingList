@@ -10,7 +10,9 @@ public record SharedListShopperRecord(
     string CreatedBy,
     string UpdatedBy,
     DateTime CreatedUtc,
-    DateTime UpdatedUtc) : AuditRecord(CreatedBy, UpdatedBy, CreatedUtc, UpdatedUtc)
+    DateTime UpdatedUtc,
+    DateTime? DeletedUtc)
+    : AuditRecord(CreatedBy, UpdatedBy, CreatedUtc, UpdatedUtc, DeletedUtc)
 {
     public SharedListShopperRecord() : this(
         Guid.Empty,
@@ -19,7 +21,8 @@ public record SharedListShopperRecord(
         string.Empty,
         string.Empty,
         DateTime.MinValue,
-        DateTime.MinValue)
+        DateTime.MinValue,
+        null)
     {
     }
 }
