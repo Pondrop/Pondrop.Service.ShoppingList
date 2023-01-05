@@ -58,7 +58,8 @@ public class RemoveListItemToShoppingListCommandHandler : DirtyCommandHandler<Sh
 
             if (shoppingListEntity is not null)
             {
-                shoppingListEntity.ListItemIds.Remove(command.ListItemId.Value);
+                foreach (var listItem in command.ListItemIds)
+                    shoppingListEntity.ListItemIds.Remove(listItem);
 
                 var evtPayload = new UpdateShoppingList(
                     shoppingListEntity.Id,

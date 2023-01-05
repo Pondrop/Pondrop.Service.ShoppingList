@@ -58,7 +58,8 @@ public class RemoveSharedListShopperToShoppingListCommandHandler : DirtyCommandH
 
             if (shoppingListEntity is not null)
             {
-                shoppingListEntity.SharedListShopperIds.Remove(command.SharedListShopperId.Value);
+                foreach (var sharedListShopperId in command.SharedListShopperIds)
+                    shoppingListEntity.SharedListShopperIds.Remove(sharedListShopperId);
 
                 var evtPayload = new UpdateShoppingList(
                     shoppingListEntity.Id,

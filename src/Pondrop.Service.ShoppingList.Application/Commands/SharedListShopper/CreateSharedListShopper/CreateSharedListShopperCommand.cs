@@ -5,10 +5,23 @@ using Pondrop.Service.ShoppingList.Domain.Models;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class CreateSharedListShopperCommand : IRequest<Result<SharedListShopperRecord>>
+public class CreateSharedListShopperCommand : IRequest<Result<List<SharedListShopperRecord>>>
 {
-    public Guid ShopperId { get; init; } = Guid.Empty;
+    public List<SharedListShopperItemRecord> SharedListShoppers { get; set; } = new List<SharedListShopperItemRecord>();
+    public Guid ShoppingListId { get; init; } = Guid.Empty;
 
-    public ListPrivilegeType ListPrivilege { get; init; } = ListPrivilegeType.unknown;
 
 }
+
+public record SharedListShopperItemRecord(
+    Guid ShopperId,
+    ListPrivilegeType ListPrivilege)
+{
+    public SharedListShopperItemRecord() : this(
+        Guid.Empty,
+        ListPrivilegeType.unknown)
+    {
+
+    }
+}
+

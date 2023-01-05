@@ -11,24 +11,24 @@ using Pondrop.Service.ShoppingList.Domain.Events.ShoppingList;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class AddListItemToShoppingListCommandHandler : DirtyCommandHandler<ShoppingListEntity, AddListItemToShoppingListCommand, Result<ShoppingListRecord>>
+public class AddSharedListShoppersToShoppingListCommandHandler : DirtyCommandHandler<ShoppingListEntity, AddSharedListShoppersToShoppingListCommand, Result<ShoppingListRecord>>
 {
     private readonly IEventRepository _eventRepository;
     private readonly ICheckpointRepository<ShoppingListEntity> _shoppingListCheckpointRepository;
     private readonly IMapper _mapper;
     private readonly IUserService _userService;
-    private readonly IValidator<AddListItemToShoppingListCommand> _validator;
-    private readonly ILogger<AddListItemToShoppingListCommandHandler> _logger;
+    private readonly IValidator<AddSharedListShoppersToShoppingListCommand> _validator;
+    private readonly ILogger<AddSharedListShoppersToShoppingListCommandHandler> _logger;
 
-    public AddListItemToShoppingListCommandHandler(
+    public AddSharedListShoppersToShoppingListCommandHandler(
         IOptions<ShoppingListUpdateConfiguration> shoppingListUpdateConfig,
         IEventRepository eventRepository,
         ICheckpointRepository<ShoppingListEntity> shoppingListCheckpointRepository,
         IDaprService daprService,
         IUserService userService,
         IMapper mapper,
-        IValidator<AddListItemToShoppingListCommand> validator,
-        ILogger<AddListItemToShoppingListCommandHandler> logger) : base(eventRepository, shoppingListUpdateConfig.Value, daprService, logger)
+        IValidator<AddSharedListShoppersToShoppingListCommand> validator,
+        ILogger<AddSharedListShoppersToShoppingListCommandHandler> logger) : base(eventRepository, shoppingListUpdateConfig.Value, daprService, logger)
     {
         _eventRepository = eventRepository;
         _shoppingListCheckpointRepository = shoppingListCheckpointRepository;
@@ -38,7 +38,7 @@ public class AddListItemToShoppingListCommandHandler : DirtyCommandHandler<Shopp
         _logger = logger;
     }
 
-    public override async Task<Result<ShoppingListRecord>> Handle(AddListItemToShoppingListCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<ShoppingListRecord>> Handle(AddSharedListShoppersToShoppingListCommand command, CancellationToken cancellationToken)
     {
         var validation = _validator.Validate(command);
 
@@ -58,7 +58,7 @@ public class AddListItemToShoppingListCommandHandler : DirtyCommandHandler<Shopp
 
             if (shoppingListEntity is not null)
             {
-                shoppingListEntity.ListItemIds.Add(command.ListItemId.Value);
+                shoppingListEntity.SharedListShopperIds.AddRange(command.SharedListShopperIds);
 
                 var evtPayload = new UpdateShoppingList(
                     shoppingListEntity.Id,
@@ -98,6 +98,6 @@ public class AddListItemToShoppingListCommandHandler : DirtyCommandHandler<Shopp
         return result;
     }
 
-    private static string FailedToCreateMessage(AddListItemToShoppingListCommand command) =>
+    private static string FailedToCreateMessage(AddSharedListShoppersToShoppingListCommand command) =>
         $"Failed to update shoppingList\nCommand: '{JsonConvert.SerializeObject(command)}'";
 }

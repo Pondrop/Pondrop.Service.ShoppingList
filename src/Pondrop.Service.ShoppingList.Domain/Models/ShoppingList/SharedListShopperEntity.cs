@@ -44,6 +44,12 @@ public record SharedListShopperEntity : EventEntity
             case CreateSharedListShopper create:
                 When(create, eventToApply.CreatedBy, eventToApply.CreatedUtc);
                 break;
+            case UpdateSharedListShopper update:
+                When(update, eventToApply.CreatedBy, eventToApply.CreatedUtc);
+                break;
+            case DeleteSharedListShopper delete:
+                When(delete, eventToApply.CreatedBy, eventToApply.CreatedUtc);
+                break;
             default:
                 throw new InvalidOperationException($"Unrecognised event type for '{StreamType}', got '{eventToApply.GetType().Name}'");
         }
@@ -72,5 +78,30 @@ public record SharedListShopperEntity : EventEntity
         ListPrivilege = create.ListPrivilege;
         CreatedBy = UpdatedBy = createdBy;
         CreatedUtc = UpdatedUtc = createdUtc;
+    }
+
+
+    private void When(UpdateSharedListShopper update, string createdBy, DateTime createdUtc)
+    {
+        var oldShopperId = ShopperId;
+        var oldListPrivilege = ListPrivilege;
+
+        Id = update.Id;
+        ShopperId = update.ShopperId;
+        ListPrivilege = update.ListPrivilege;
+
+        if (oldShopperId != ShopperId ||
+            oldListPrivilege != ListPrivilege)
+        {
+            UpdatedBy = createdBy;
+            UpdatedUtc = createdUtc;
+        }
+    }
+
+    private void When(DeleteSharedListShopper delete, string createdBy, DateTime deletedUtc)
+    {
+        UpdatedBy = createdBy;
+        UpdatedUtc = deletedUtc;
+        DeletedUtc = deletedUtc;
     }
 }

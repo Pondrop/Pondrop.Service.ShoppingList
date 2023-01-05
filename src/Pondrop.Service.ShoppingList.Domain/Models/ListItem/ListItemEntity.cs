@@ -61,6 +61,12 @@ public record ListItemEntity : EventEntity
             case CreateListItem create:
                 When(create, eventToApply.CreatedBy, eventToApply.CreatedUtc);
                 break;
+            case UpdateListItem update:
+                When(update, eventToApply.CreatedBy, eventToApply.CreatedUtc);
+                break;
+            case DeleteListItem delete:
+                When(delete, eventToApply.CreatedBy, eventToApply.CreatedUtc);
+                break;
             default:
                 throw new InvalidOperationException($"Unrecognised event type for '{StreamType}', got '{eventToApply.GetType().Name}'");
         }
@@ -96,5 +102,47 @@ public record ListItemEntity : EventEntity
 
         CreatedBy = UpdatedBy = createdBy;
         CreatedUtc = UpdatedUtc = createdUtc;
+    }
+
+    private void When(UpdateListItem update, string createdBy, DateTime createdUtc)
+    {
+        var oldItemTitle = ItemTitle;
+        var oldAddedBy = AddedBy;
+        var oldSelectedCategoryId = SelectedCategoryId;
+        var oldSelectedPreferenceIds = SelectedPreferenceIds;
+        var oldItemNetSize = ItemNetSize;
+        var oldQuantity = Quantity;
+        var oldItemUOM = ItemUOM;
+        var oldSelectedProductId = SelectedProductId;
+
+        Id = update.Id;
+        ItemTitle = update.ItemTitle;
+        AddedBy = update.AddedBy;
+        SelectedCategoryId = update.SelectedCategoryId;
+        SelectedPreferenceIds = update.SelectedPreferenceIds;
+        ItemNetSize = update.ItemNetSize;
+        Quantity = update.Quantity;
+        ItemUOM = update.ItemUOM;
+        SelectedProductId = update.SelectedProductId;
+
+        if (oldItemTitle != ItemTitle ||
+            oldAddedBy != AddedBy ||
+            oldSelectedCategoryId != SelectedCategoryId ||
+            oldSelectedPreferenceIds != SelectedPreferenceIds ||
+            oldItemNetSize != ItemNetSize ||
+            oldQuantity != Quantity ||
+            oldItemUOM != ItemUOM ||
+            oldSelectedProductId != SelectedProductId)
+        {
+            UpdatedBy = createdBy;
+            UpdatedUtc = createdUtc;
+        }
+    }
+
+    private void When(DeleteListItem delete, string createdBy, DateTime deletedUtc)
+    {
+        UpdatedBy = createdBy;
+        UpdatedUtc = deletedUtc;
+        DeletedUtc = deletedUtc;
     }
 }

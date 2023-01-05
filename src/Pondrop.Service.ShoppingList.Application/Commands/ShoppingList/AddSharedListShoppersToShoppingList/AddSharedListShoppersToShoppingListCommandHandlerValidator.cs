@@ -3,10 +3,10 @@ using Pondrop.Service.Interfaces.Services;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class RemoveSharedListShopperToShoppingListCommandHandlerValidator : AbstractValidator<RemoveSharedListShopperToShoppingListCommand>
+public class AddSharedListShoppersToShoppingListCommandHandlerValidator : AbstractValidator<AddSharedListShoppersToShoppingListCommand>
 {
     
-    public RemoveSharedListShopperToShoppingListCommandHandlerValidator()
+    public AddSharedListShoppersToShoppingListCommandHandlerValidator()
     {
         RuleFor(x => x.ShoppingListId).NotEmpty();
         RuleForEach(x => x.SharedListShopperIds).ChildRules(sharedListShopper =>

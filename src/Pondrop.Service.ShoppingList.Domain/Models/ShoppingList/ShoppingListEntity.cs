@@ -12,6 +12,11 @@ public record ShoppingListEntity : EventEntity
     public ShoppingListEntity()
     {
         Id = Guid.Empty;
+        Name = string.Empty;
+        ShoppingListType = Enums.ShoppingList.ShoppingListType.unknown;
+        SelectedStoreIds = new List<Guid>();
+        ListItemIds = new List<Guid>();
+        SharedListShopperIds = new List<Guid>();
     }
 
     public ShoppingListEntity(IEnumerable<IEvent> events) : this()

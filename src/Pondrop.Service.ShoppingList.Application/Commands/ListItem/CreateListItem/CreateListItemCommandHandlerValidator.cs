@@ -5,9 +5,13 @@ namespace Pondrop.Service.ShoppingList.Application.Commands;
 
 public class CreateListItemCommandHandlerValidator : AbstractValidator<CreateListItemCommand>
 {
-    
+
     public CreateListItemCommandHandlerValidator()
     {
-        RuleFor(x => x.ItemTitle).NotEmpty();
+        RuleFor(x => x.ShoppingListId).NotEmpty();
+        RuleForEach(x => x.ListItems).ChildRules(listItem =>
+        {
+            listItem.RuleFor(x => x.ItemTitle).NotEmpty();
+        });
     }
 }

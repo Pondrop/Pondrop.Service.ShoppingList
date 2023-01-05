@@ -7,5 +7,5 @@ namespace Pondrop.Service.ShoppingList.Application.Commands;
 public class RemoveSharedListShopperToShoppingListCommand : IRequest<Result<ShoppingListRecord>>
 {
     public Guid? ShoppingListId { get; init; } = null;
-    public Guid? SharedListShopperId { get; init; } = null;
+    public List<Guid>? SharedListShopperIds { get; init; } = null;
 }

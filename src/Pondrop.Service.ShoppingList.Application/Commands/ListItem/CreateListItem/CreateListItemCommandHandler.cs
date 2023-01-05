@@ -11,7 +11,7 @@ using Pondrop.Service.Interfaces.Services;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class CreateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, CreateListItemCommand, Result<ListItemRecord>>
+public class CreateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, CreateListItemCommand, Result<List<ListItemRecord>>>
 {
     private readonly IEventRepository _eventRepository;
     private readonly IMapper _mapper;
@@ -35,7 +35,7 @@ public class CreateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
         _logger = logger;
     }
 
-    public override async Task<Result<ListItemRecord>> Handle(CreateListItemCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<List<ListItemRecord>>> Handle(CreateListItemCommand command, CancellationToken cancellationToken)
     {
         var validation = _validator.Validate(command);
 
@@ -43,37 +43,45 @@ public class CreateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
         {
             var errorMessage = $"Create ListItem failed, errors on validation {validation}";
             _logger.LogError(errorMessage);
-            return Result<ListItemRecord>.Error(errorMessage);
+            return Result<List<ListItemRecord>>.Error(errorMessage);
         }
 
-        var result = default(Result<ListItemRecord>);
+        var result = default(Result<List<ListItemRecord>>);
 
         try
         {
-            var ListItemEntity = new ListItemEntity(
-                command.ItemTitle,
-                command.AddedBy,
-                command.SelectedCategoryId,
-                command.Quantity,
-                command.ItemNetSize,
-                command.ItemUOM,
-                command.SelectedPreferenceIds,
-                command.SelectedProductId,
+            var entities = new List<ListItemEntity>();
+
+            foreach (var listItem in command.ListItems)
+            {
+                var ListItemEntity = new ListItemEntity(
+                listItem.ItemTitle,
+                listItem.AddedBy,
+                listItem.SelectedCategoryId,
+                listItem.Quantity,
+                listItem.ItemNetSize,
+                listItem.ItemUOM,
+                listItem.SelectedPreferenceIds,
+                listItem.SelectedProductId,
                 _userService.CurrentUserName());
 
-            var success = await _eventRepository.AppendEventsAsync(ListItemEntity.StreamId, 0, ListItemEntity.GetEvents());
+                var success = await _eventRepository.AppendEventsAsync(ListItemEntity.StreamId, 0, ListItemEntity.GetEvents());
 
-            await Task.WhenAll(
-                InvokeDaprMethods(ListItemEntity.Id, ListItemEntity.GetEvents()));
+                await Task.WhenAll(
+                    InvokeDaprMethods(ListItemEntity.Id, ListItemEntity.GetEvents()));
 
-            result = success
-                ? Result<ListItemRecord>.Success(_mapper.Map<ListItemRecord>(ListItemEntity))
-                : Result<ListItemRecord>.Error(FailedToCreateMessage(command));
+                if (success)
+                    entities.Add(ListItemEntity);
+            }
+
+            result = entities.Count() > 0
+                ? Result<List<ListItemRecord>>.Success(_mapper.Map<List<ListItemRecord>>(entities))
+                : Result<List<ListItemRecord>>.Error(FailedToCreateMessage(command));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, FailedToCreateMessage(command));
-            result = Result<ListItemRecord>.Error(ex);
+            result = Result<List<ListItemRecord>>.Error(ex);
         }
 
         return result;

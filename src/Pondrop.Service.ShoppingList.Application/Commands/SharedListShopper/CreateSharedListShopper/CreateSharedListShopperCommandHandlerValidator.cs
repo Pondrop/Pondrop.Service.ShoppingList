@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using Pondrop.Service.Interfaces.Services;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
@@ -8,6 +7,10 @@ public class CreateSharedListShopperCommandHandlerValidator : AbstractValidator<
     
     public CreateSharedListShopperCommandHandlerValidator()
     {
-        RuleFor(x => x.ShopperId).NotEmpty();
+        RuleFor(x => x.ShoppingListId).NotEmpty(); 
+        RuleForEach(x => x.SharedListShoppers).ChildRules(shareListShopper =>
+        {
+            shareListShopper.RuleFor(x => x.ShopperId).NotEmpty();
+        });
     }
 }

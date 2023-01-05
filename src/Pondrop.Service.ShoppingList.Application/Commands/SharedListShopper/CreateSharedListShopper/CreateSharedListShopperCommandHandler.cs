@@ -11,7 +11,7 @@ using Pondrop.Service.Interfaces.Services;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class CreateSharedListShopperCommandHandler : DirtyCommandHandler<SharedListShopperEntity, CreateSharedListShopperCommand, Result<SharedListShopperRecord>>
+public class CreateSharedListShopperCommandHandler : DirtyCommandHandler<SharedListShopperEntity, CreateSharedListShopperCommand, Result<List<SharedListShopperRecord>>>
 {
     private readonly IEventRepository _eventRepository;
     private readonly IMapper _mapper;
@@ -35,7 +35,7 @@ public class CreateSharedListShopperCommandHandler : DirtyCommandHandler<SharedL
         _logger = logger;
     }
 
-    public override async Task<Result<SharedListShopperRecord>> Handle(CreateSharedListShopperCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<List<SharedListShopperRecord>>> Handle(CreateSharedListShopperCommand command, CancellationToken cancellationToken)
     {
         var validation = _validator.Validate(command);
 
@@ -43,31 +43,39 @@ public class CreateSharedListShopperCommandHandler : DirtyCommandHandler<SharedL
         {
             var errorMessage = $"Create SharedListShopper failed, errors on validation {validation}";
             _logger.LogError(errorMessage);
-            return Result<SharedListShopperRecord>.Error(errorMessage);
+            return Result<List<SharedListShopperRecord>>.Error(errorMessage);
         }
 
-        var result = default(Result<SharedListShopperRecord>);
+        var result = default(Result<List<SharedListShopperRecord>>);
 
         try
         {
-            var SharedListShopperEntity = new SharedListShopperEntity(
-                command.ShopperId,
-                command.ListPrivilege,
-                _userService.CurrentUserName());
-          
-            var success = await _eventRepository.AppendEventsAsync(SharedListShopperEntity.StreamId, 0, SharedListShopperEntity.GetEvents());
+            var entities = new List<SharedListShopperEntity>();
 
-            await Task.WhenAll(
-                InvokeDaprMethods(SharedListShopperEntity.Id, SharedListShopperEntity.GetEvents()));
+            foreach (var sharedListShopper in command.SharedListShoppers)
+            {
+                var SharedListShopperEntity = new SharedListShopperEntity(
+                    sharedListShopper.ShopperId,
+                    sharedListShopper.ListPrivilege,
+                    _userService.CurrentUserName());
 
-            result = success
-                ? Result<SharedListShopperRecord>.Success(_mapper.Map<SharedListShopperRecord>(SharedListShopperEntity))
-                : Result<SharedListShopperRecord>.Error(FailedToCreateMessage(command));
+                var success = await _eventRepository.AppendEventsAsync(SharedListShopperEntity.StreamId, 0, SharedListShopperEntity.GetEvents());
+
+                await Task.WhenAll(
+                    InvokeDaprMethods(SharedListShopperEntity.Id, SharedListShopperEntity.GetEvents()));
+
+                if (success)
+                    entities.Add(SharedListShopperEntity);
+            }
+
+            result = entities.Count() > 0
+                ? Result<List<SharedListShopperRecord>>.Success(_mapper.Map<List<SharedListShopperRecord>>(entities))
+                : Result<List<SharedListShopperRecord>>.Error(FailedToCreateMessage(command));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, FailedToCreateMessage(command));
-            result = Result<SharedListShopperRecord>.Error(ex);
+            result = Result<List<SharedListShopperRecord>>.Error(ex);
         }
 
         return result;
