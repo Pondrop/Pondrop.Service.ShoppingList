@@ -18,7 +18,9 @@ public record ListItemItemRecord(
     double ItemNetSize,
     string ItemUOM,
     List<Guid> SelectedPreferenceIds,
-    Guid SelectedProductId)
+    Guid SelectedProductId,
+    Guid? StoreId,
+    int SortOrder)
 {
     public ListItemItemRecord() : this(
         string.Empty,
@@ -28,7 +30,9 @@ public record ListItemItemRecord(
         0,
         string.Empty,
         new List<Guid>(),
-        Guid.Empty)
+        Guid.Empty,
+        null,
+        0)
     {
     }
 }

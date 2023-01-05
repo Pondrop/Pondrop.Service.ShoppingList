@@ -3,6 +3,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Pondrop.Service.Interfaces;
+using Pondrop.Service.Interfaces.Services;
+using Pondrop.Service.Models.User;
 using Pondrop.Service.ShoppingList.Application.Models;
 using Pondrop.Service.ShoppingList.Domain.Models;
 
@@ -13,6 +15,7 @@ public class GetSharedListShopperByShoppingListIdQueryHandler : IRequestHandler<
     private readonly ICheckpointRepository<SharedListShopperEntity> _checkpointRepository;
     private readonly ICheckpointRepository<ShoppingListEntity> _shoppingListCheckpointRepository;
     private readonly IMapper _mapper;
+    private readonly IUserService _userService;
     private readonly IValidator<GetSharedListShopperByShoppingListIdQuery> _validator;
     private readonly ILogger<GetSharedListShopperByShoppingListIdQueryHandler> _logger;
 
@@ -21,18 +24,20 @@ public class GetSharedListShopperByShoppingListIdQueryHandler : IRequestHandler<
         ICheckpointRepository<ShoppingListEntity> shoppingListCheckpointRepository,
         IValidator<GetSharedListShopperByShoppingListIdQuery> validator,
         IMapper mapper,
+        IUserService userService,
         ILogger<GetSharedListShopperByShoppingListIdQueryHandler> logger)
     {
         _checkpointRepository = checkpointRepository;
         _shoppingListCheckpointRepository = shoppingListCheckpointRepository;
         _mapper = mapper;
+        _userService = userService;
         _validator = validator;
         _logger = logger;
     }
 
-    public async Task<Result<List<SharedListShopperRecord>?>> Handle(GetSharedListShopperByShoppingListIdQuery query, CancellationToken cancellationToken)
+    public async Task<Result<List<SharedListShopperRecord>?>> Handle(GetSharedListShopperByShoppingListIdQuery request, CancellationToken cancellationToken)
     {
-        var validation = _validator.Validate(query);
+        var validation = _validator.Validate(request);
 
         if (!validation.IsValid)
         {
@@ -45,7 +50,7 @@ public class GetSharedListShopperByShoppingListIdQueryHandler : IRequestHandler<
 
         try
         {
-            var shoppingListEntity = await _shoppingListCheckpointRepository.GetByIdAsync(query.ShoppingListId);
+            var shoppingListEntity = await _shoppingListCheckpointRepository.GetByIdAsync(request.ShoppingListId);
 
             if (shoppingListEntity == null)
             {
@@ -54,7 +59,12 @@ public class GetSharedListShopperByShoppingListIdQueryHandler : IRequestHandler<
                 return Result<List<SharedListShopperRecord>?>.Error(errorMessage);
             }
 
-            var entity = await _checkpointRepository.QueryAsync($"SELECT * FROM c WHERE c.id in ({string.Join(",", shoppingListEntity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})");
+            var query = $"SELECT * FROM c WHERE c.id in ({string.Join(",", shoppingListEntity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})";
+
+            query += _userService.CurrentUserType() == UserType.Shopper
+                   ? $" AND c.createdBy = '{_userService.CurrentUserId()}'" : string.Empty;
+
+            var entity = await _checkpointRepository.QueryAsync(query);
 
             result = entity is not null
                 ? Result<List<SharedListShopperRecord>?>.Success(_mapper.Map<List<SharedListShopperRecord>>(entity))

@@ -13,6 +13,16 @@ public record ListItemEntity : EventEntity
     public ListItemEntity()
     {
         Id = Guid.Empty;
+        ItemTitle = string.Empty;
+        AddedBy = Guid.Empty;
+        SelectedCategoryId = Guid.Empty;
+        Quantity = 0;
+        ItemNetSize = 0;
+        ItemUOM = string.Empty;
+        SelectedPreferenceIds = new List<Guid>();
+        SelectedProductId = Guid.Empty;
+        StoreId = null;
+        SortOrder = 0;
 
     }
 
@@ -24,9 +34,9 @@ public record ListItemEntity : EventEntity
         }
     }
 
-    public ListItemEntity(string itemTitle, Guid addedBy, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, string createdBy) : this()
+    public ListItemEntity(string itemTitle, Guid addedBy, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, Guid? storeId, int sortOrder, string createdBy) : this()
     {
-        var create = new CreateListItem(Guid.NewGuid(), itemTitle, addedBy, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId);
+        var create = new CreateListItem(Guid.NewGuid(), itemTitle, addedBy, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId, storeId, sortOrder);
         Apply(create, createdBy);
     }
 
@@ -53,6 +63,12 @@ public record ListItemEntity : EventEntity
 
     [JsonProperty(PropertyName = "selectedProductId")]
     public Guid SelectedProductId { get; private set; }
+
+    [JsonProperty(PropertyName = "storeId")]
+    public Guid? StoreId { get; private set; }
+
+    [JsonProperty(PropertyName = "sortOrder")]
+    public int SortOrder { get; private set; }
 
     protected sealed override void Apply(IEvent eventToApply)
     {
@@ -99,6 +115,8 @@ public record ListItemEntity : EventEntity
         Quantity = create.Quantity;
         ItemUOM = create.ItemUOM;
         SelectedProductId = create.SelectedProductId;
+        StoreId = create.StoreId;
+        SortOrder = create.SortOrder;
 
         CreatedBy = UpdatedBy = createdBy;
         CreatedUtc = UpdatedUtc = createdUtc;
@@ -114,6 +132,8 @@ public record ListItemEntity : EventEntity
         var oldQuantity = Quantity;
         var oldItemUOM = ItemUOM;
         var oldSelectedProductId = SelectedProductId;
+        var oldStoreId = StoreId;
+        var oldSortOrder = SortOrder;
 
         Id = update.Id;
         ItemTitle = update.ItemTitle;
@@ -124,6 +144,8 @@ public record ListItemEntity : EventEntity
         Quantity = update.Quantity;
         ItemUOM = update.ItemUOM;
         SelectedProductId = update.SelectedProductId;
+        StoreId = update.StoreId;
+        SortOrder = update.SortOrder;
 
         if (oldItemTitle != ItemTitle ||
             oldAddedBy != AddedBy ||
@@ -132,7 +154,9 @@ public record ListItemEntity : EventEntity
             oldItemNetSize != ItemNetSize ||
             oldQuantity != Quantity ||
             oldItemUOM != ItemUOM ||
-            oldSelectedProductId != SelectedProductId)
+            oldSelectedProductId != SelectedProductId ||
+            oldStoreId != StoreId ||
+            oldSortOrder != SortOrder)
         {
             UpdatedBy = createdBy;
             UpdatedUtc = createdUtc;

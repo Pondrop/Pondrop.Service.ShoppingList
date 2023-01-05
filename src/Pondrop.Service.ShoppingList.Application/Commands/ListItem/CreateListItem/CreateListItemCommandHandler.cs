@@ -63,6 +63,8 @@ public class CreateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
                 listItem.ItemUOM,
                 listItem.SelectedPreferenceIds,
                 listItem.SelectedProductId,
+                listItem.StoreId,
+                listItem.SortOrder,
                 _userService.CurrentUserName());
 
                 var success = await _eventRepository.AppendEventsAsync(ListItemEntity.StreamId, 0, ListItemEntity.GetEvents());
