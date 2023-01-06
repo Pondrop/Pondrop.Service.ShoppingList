@@ -56,6 +56,7 @@ public class CreateShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
                 command.SelectedStoreIds,
                 command.SharedListShopperIds,
                 command.ListItemIds,
+                command.SortOrder,
                 _userService.CurrentUserName());
           
             var success = await _eventRepository.AppendEventsAsync(ShoppingListEntity.StreamId, 0, ShoppingListEntity.GetEvents());

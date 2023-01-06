@@ -6,7 +6,11 @@ public class UpdateShoppingListCommandHandlerValidator : AbstractValidator<Updat
 {
     public UpdateShoppingListCommandHandlerValidator()
     {
-        RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.Name).NotEmpty();
+        RuleForEach(x => x.ShoppingLists).ChildRules(shoppingList =>
+        {
+            shoppingList.RuleFor(x => x.Id).NotNull();
+            shoppingList.RuleFor(x => x.Id).NotEmpty();
+            shoppingList.RuleFor(x => x.Name).NotEmpty();
+        });
     }
 }

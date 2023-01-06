@@ -12,5 +12,6 @@ public class CreateShoppingListCommand : IRequest<Result<ShoppingListRecord>>
     public List<Guid>? SelectedStoreIds { get; init; } = new List<Guid>();
     public List<Guid>? SharedListShopperIds { get; init; } = new List<Guid>();
     public List<Guid>? ListItemIds { get; init; } = new List<Guid>();
+    public int SortOrder { get; init; } = 0;
 
 }

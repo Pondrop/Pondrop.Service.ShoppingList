@@ -11,7 +11,7 @@ using Pondrop.Service.ShoppingList.Domain.Events.ShoppingList;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class UpdateShoppingListCommandHandler : DirtyCommandHandler<ShoppingListEntity, UpdateShoppingListCommand, Result<ShoppingListRecord>>
+public class UpdateShoppingListCommandHandler : DirtyCommandHandler<ShoppingListEntity, UpdateShoppingListCommand, Result<List<ShoppingListRecord>>>
 {
     private readonly IEventRepository _eventRepository;
     private readonly ICheckpointRepository<ShoppingListEntity> _shoppingListCheckpointRepository;
@@ -38,7 +38,7 @@ public class UpdateShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
         _logger = logger;
     }
 
-    public override async Task<Result<ShoppingListRecord>> Handle(UpdateShoppingListCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<List<ShoppingListRecord>>> Handle(UpdateShoppingListCommand command, CancellationToken cancellationToken)
     {
         var validation = _validator.Validate(command);
 
@@ -46,51 +46,59 @@ public class UpdateShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
         {
             var errorMessage = $"Update shoppingList failed, errors on validation {validation}";
             _logger.LogError(errorMessage);
-            return Result<ShoppingListRecord>.Error(errorMessage);
+            return Result<List<ShoppingListRecord>>.Error(errorMessage);
         }
 
-        var result = default(Result<ShoppingListRecord>);
+        var result = default(Result<List<ShoppingListRecord>>);
 
         try
         {
-            var shoppingListEntity = await _shoppingListCheckpointRepository.GetByIdAsync(command.Id);
-            shoppingListEntity ??= await GetFromStreamAsync(command.Id);
-
-            if (shoppingListEntity is not null)
+            var entities = new List<ShoppingListEntity>();
+            foreach (var shoppingList in command.ShoppingLists)
             {
-                var evtPayload = new UpdateShoppingList(
-                    command.Id,
-                    command.Name,
-                    command.ShoppingListType,
-                command.SelectedStoreIds,
-                command.SharedListShopperIds,
-                command.ListItemIds);
-                var createdBy = _userService.CurrentUserName();
+                var shoppingListEntity = await _shoppingListCheckpointRepository.GetByIdAsync(shoppingList.Id);
+                shoppingListEntity ??= await GetFromStreamAsync(shoppingList.Id);
 
-                var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
-
-                if (!success)
+                if (shoppingListEntity is not null)
                 {
-                    await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
-                    success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                    var evtPayload = new UpdateShoppingList(
+                        shoppingList.Id,
+                        shoppingList.Name,
+                        shoppingListEntity.ShoppingListType,
+                    shoppingListEntity.SelectedStoreIds,
+                    shoppingListEntity.SharedListShopperIds,
+                    shoppingListEntity.ListItemIds,
+                    shoppingList.SortOrder);
+                    var createdBy = _userService.CurrentUserName();
+
+                    var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+
+                    if (!success)
+                    {
+                        await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
+                        success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                    }
+
+                    await Task.WhenAll(
+                        InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
+
+                    if (success)
+                        entities.Add(shoppingListEntity);
                 }
-
-                await Task.WhenAll(
-                    InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
-
-                result = success
-                    ? Result<ShoppingListRecord>.Success(_mapper.Map<ShoppingListRecord>(shoppingListEntity))
-                    : Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
+                else
+                {
+                    result = Result<List<ShoppingListRecord>>.Error($"ShoppingList does not exist '{shoppingList.Id}'");
+                    break;
+                }
             }
-            else
-            {
-                result = Result<ShoppingListRecord>.Error($"ShoppingList does not exist '{command.Id}'");
-            }
+            result = entities != null && entities.Count() > 0
+                        ? Result<List<ShoppingListRecord>>.Success(_mapper.Map<List<ShoppingListRecord>>(entities))
+                        : Result<List<ShoppingListRecord>>.Error(FailedToCreateMessage(command));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, FailedToCreateMessage(command));
-            result = Result<ShoppingListRecord>.Error(ex);
+            result = Result<List<ShoppingListRecord>>.Error(ex);
         }
 
         return result;

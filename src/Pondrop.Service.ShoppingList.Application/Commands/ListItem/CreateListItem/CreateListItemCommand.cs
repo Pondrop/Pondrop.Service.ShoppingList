@@ -6,11 +6,11 @@ namespace Pondrop.Service.ShoppingList.Application.Commands;
 
 public class CreateListItemCommand : IRequest<Result<List<ListItemRecord>>>
 {
-    public List<ListItemItemRecord> ListItems { get; set; } = new List<ListItemItemRecord>();
+    public List<ListItemCreateRecord> ListItems { get; set; } = new List<ListItemCreateRecord>();
     public Guid ShoppingListId { get; init; } = Guid.Empty;
 }
 
-public record ListItemItemRecord(
+public record ListItemCreateRecord(
     string ItemTitle,
     Guid AddedBy,
     Guid SelectedCategoryId,
@@ -20,9 +20,10 @@ public record ListItemItemRecord(
     List<Guid> SelectedPreferenceIds,
     Guid SelectedProductId,
     Guid? StoreId,
-    int SortOrder)
+    int SortOrder,
+    bool Checked)
 {
-    public ListItemItemRecord() : this(
+    public ListItemCreateRecord() : this(
         string.Empty,
         Guid.Empty,
         Guid.Empty,
@@ -32,7 +33,8 @@ public record ListItemItemRecord(
         new List<Guid>(),
         Guid.Empty,
         null,
-        0)
+        0,
+        false)
     {
     }
 }

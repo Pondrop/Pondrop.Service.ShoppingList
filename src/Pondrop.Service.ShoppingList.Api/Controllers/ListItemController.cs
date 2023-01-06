@@ -96,6 +96,28 @@ public class ListItemController : ControllerBase
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }
 
+
+    [HttpPut]
+    [Route("update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateListItem([FromBody] UpdateListItemCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return await result.MatchAsync<IActionResult>(
+            async items =>
+            {
+                if (items != null)
+                    foreach (var item in items)
+                        await _serviceBusService.SendMessageAsync(new UpdateListItemCheckpointByIdCommand() { Id = item!.Id });
+
+                return new OkObjectResult(items);
+            },
+            (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
+    }
+
+
+
     [HttpDelete]
     [Route("remove")]
     [ProducesResponseType(StatusCodes.Status201Created)]

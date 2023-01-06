@@ -12,5 +12,6 @@ public record CreateListItem(
     List<Guid> SelectedPreferenceIds,
     Guid SelectedProductId,
     Guid? StoreId,
-    int SortOrder
+    int SortOrder,
+    bool Checked
     ) : EventPayload;

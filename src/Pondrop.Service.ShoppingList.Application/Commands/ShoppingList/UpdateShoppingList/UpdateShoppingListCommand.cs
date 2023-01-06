@@ -5,12 +5,22 @@ using Pondrop.Service.ShoppingList.Domain.Models;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class UpdateShoppingListCommand : IRequest<Result<ShoppingListRecord>>
+
+public class UpdateShoppingListCommand : IRequest<Result<List<ShoppingListRecord>>>
 {
-    public Guid Id { get; init; } = Guid.Empty;
-    public string Name { get; init; } = null;
-    public ShoppingListType? ShoppingListType { get; init; } = null;
-    public List<Guid>? SelectedStoreIds { get; init; } = null;
-    public List<Guid>? SharedListShopperIds { get; init; } = null;
-    public List<Guid>? ListItemIds { get; init; } = null;
+    public List<ShoppingListItemRecord> ShoppingLists { get; set; } = new List<ShoppingListItemRecord>();
+}
+
+
+public record ShoppingListItemRecord(
+    Guid Id,
+    string Name,
+    int SortOrder)
+{
+    public ShoppingListItemRecord() : this(
+        Guid.Empty,
+        string.Empty,
+        0)
+    {
+    }
 }

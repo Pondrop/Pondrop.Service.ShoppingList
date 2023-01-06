@@ -23,7 +23,7 @@ public record ListItemEntity : EventEntity
         SelectedProductId = Guid.Empty;
         StoreId = null;
         SortOrder = 0;
-
+        Checked = false;
     }
 
     public ListItemEntity(IEnumerable<IEvent> events) : this()
@@ -34,9 +34,9 @@ public record ListItemEntity : EventEntity
         }
     }
 
-    public ListItemEntity(string itemTitle, Guid addedBy, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, Guid? storeId, int sortOrder, string createdBy) : this()
+    public ListItemEntity(string itemTitle, Guid addedBy, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, Guid? storeId, int sortOrder, bool @checked, string createdBy) : this()
     {
-        var create = new CreateListItem(Guid.NewGuid(), itemTitle, addedBy, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId, storeId, sortOrder);
+        var create = new CreateListItem(Guid.NewGuid(), itemTitle, addedBy, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId, storeId, sortOrder, @checked);
         Apply(create, createdBy);
     }
 
@@ -69,6 +69,10 @@ public record ListItemEntity : EventEntity
 
     [JsonProperty(PropertyName = "sortOrder")]
     public int SortOrder { get; private set; }
+
+    [JsonProperty(PropertyName = "checked")]
+    public bool Checked { get; private set; }
+
 
     protected sealed override void Apply(IEvent eventToApply)
     {
@@ -117,6 +121,7 @@ public record ListItemEntity : EventEntity
         SelectedProductId = create.SelectedProductId;
         StoreId = create.StoreId;
         SortOrder = create.SortOrder;
+        Checked = create.Checked;
 
         CreatedBy = UpdatedBy = createdBy;
         CreatedUtc = UpdatedUtc = createdUtc;
@@ -134,6 +139,7 @@ public record ListItemEntity : EventEntity
         var oldSelectedProductId = SelectedProductId;
         var oldStoreId = StoreId;
         var oldSortOrder = SortOrder;
+        var oldChecked = Checked;
 
         Id = update.Id;
         ItemTitle = update.ItemTitle;
@@ -146,6 +152,7 @@ public record ListItemEntity : EventEntity
         SelectedProductId = update.SelectedProductId;
         StoreId = update.StoreId;
         SortOrder = update.SortOrder;
+        Checked = update.Checked;
 
         if (oldItemTitle != ItemTitle ||
             oldAddedBy != AddedBy ||
@@ -156,7 +163,8 @@ public record ListItemEntity : EventEntity
             oldItemUOM != ItemUOM ||
             oldSelectedProductId != SelectedProductId ||
             oldStoreId != StoreId ||
-            oldSortOrder != SortOrder)
+            oldSortOrder != SortOrder ||
+            oldChecked != Checked)
         {
             UpdatedBy = createdBy;
             UpdatedUtc = createdUtc;

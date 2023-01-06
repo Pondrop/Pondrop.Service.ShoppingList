@@ -71,7 +71,7 @@ public class ShoppingListController : ControllerBase
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }
 
-    [HttpPost]
+    [HttpPut]
     [Route("update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -79,10 +79,13 @@ public class ShoppingListController : ControllerBase
     {
         var result = await _mediator.Send(command);
         return await result.MatchAsync<IActionResult>(
-            async i =>
+            async items =>
             {
-                await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = i!.Id });
-                return new OkObjectResult(i);
+                if (items != null)
+                    foreach (var item in items)
+                        await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = item!.Id });
+
+                return new OkObjectResult(items);
             },
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }

@@ -67,7 +67,8 @@ public class RemoveSharedListShopperToShoppingListCommandHandler : DirtyCommandH
                     shoppingListEntity.ShoppingListType,
                     shoppingListEntity.SelectedStoreIds,
                     shoppingListEntity.SharedListShopperIds,
-                    shoppingListEntity.ListItemIds);
+                    shoppingListEntity.ListItemIds,
+                    shoppingListEntity.SortOrder);
                 var createdBy = _userService.CurrentUserName();
 
                 var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);

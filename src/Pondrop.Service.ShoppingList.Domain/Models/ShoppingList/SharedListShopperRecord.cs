@@ -3,27 +3,21 @@ using Pondrop.Service.ShoppingList.Domain.Enums.ShoppingList;
 
 namespace Pondrop.Service.ShoppingList.Domain.Models;
 
-public record ShoppingListRecord(
- Guid Id,
-    string Name,
-    ShoppingListType? ShoppingListType,
-    List<Guid>? SelectedStoreIds,
-    List<Guid>? SharedListShopperIds,
-    List<Guid>? ListItemIds,
-        string CreatedBy,
-        string UpdatedBy,
-        DateTime CreatedUtc,
-        DateTime UpdatedUtc,
-        DateTime? DeletedUtc)
+public record SharedListShopperRecord(
+    Guid Id,
+    Guid ShopperId,
+    ListPrivilegeType ListPrivilege,
+    string CreatedBy,
+    string UpdatedBy,
+    DateTime CreatedUtc,
+    DateTime UpdatedUtc,
+    DateTime? DeletedUtc)
     : AuditRecord(CreatedBy, UpdatedBy, CreatedUtc, UpdatedUtc, DeletedUtc)
 {
-    public ShoppingListRecord() : this(
+    public SharedListShopperRecord() : this(
         Guid.Empty,
-        string.Empty,
-        null,
-        new List<Guid>(0),
-        new List<Guid>(0),
-        new List<Guid>(0),
+        Guid.Empty,
+        ListPrivilegeType.unknown,
         string.Empty,
         string.Empty,
         DateTime.MinValue,
