@@ -59,10 +59,10 @@ public class GetSharedListShopperByShoppingListIdQueryHandler : IRequestHandler<
                 return Result<List<SharedListShopperRecord>?>.Error(errorMessage);
             }
 
-            var query = $"SELECT * FROM c WHERE c.id in ({string.Join(",", shoppingListEntity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})";
+            var query = $"SELECT * FROM c WHERE c.id in ({string.Join(",", shoppingListEntity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())}) AND c.deletedUtc = null";
 
             query += _userService.CurrentUserType() == UserType.Shopper
-                   ? $" AND c.createdBy = '{_userService.CurrentUserId()}'" : string.Empty;
+                   ? $" AND c.createdBy = '{_userService.CurrentUserName()}'" : string.Empty;
 
             var entity = await _checkpointRepository.QueryAsync(query);
 

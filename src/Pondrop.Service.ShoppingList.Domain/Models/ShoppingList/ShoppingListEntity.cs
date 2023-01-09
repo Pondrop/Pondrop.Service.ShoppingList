@@ -62,6 +62,9 @@ public record ShoppingListEntity : EventEntity
             case UpdateShoppingList update:
                 When(update, eventToApply.CreatedBy, eventToApply.CreatedUtc);
                 break;
+            case DeleteShoppingList delete:
+                When(delete, eventToApply.CreatedBy, eventToApply.CreatedUtc);
+                break;
             //case AddShoppingListAddress addAddress:
             //    When(addAddress, eventToApply.CreatedBy, eventToApply.CreatedUtc);
             //    break;
@@ -127,5 +130,12 @@ public record ShoppingListEntity : EventEntity
             UpdatedUtc = createdUtc;
         }
     }
-    
+
+    private void When(DeleteShoppingList delete, string createdBy, DateTime deletedUtc)
+    {
+        UpdatedBy = createdBy;
+        UpdatedUtc = deletedUtc;
+        DeletedUtc = deletedUtc;
+    }
+
 }

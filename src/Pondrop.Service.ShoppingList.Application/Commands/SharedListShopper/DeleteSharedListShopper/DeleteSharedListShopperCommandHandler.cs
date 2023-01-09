@@ -62,7 +62,9 @@ public class DeleteSharedListShopperCommandHandler : DirtyCommandHandler<SharedL
 
                 if (SharedListShopperEntity is not null)
                 {
-                    var evtPayload = new DeleteSharedListShopper(
+                    if (SharedListShopperEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                    {
+                        var evtPayload = new DeleteSharedListShopper(
                         SharedListShopper);
                     var createdBy = _userService.CurrentUserName();
 
@@ -78,6 +80,11 @@ public class DeleteSharedListShopperCommandHandler : DirtyCommandHandler<SharedL
 
                     await Task.WhenAll(
                         InvokeDaprMethods(SharedListShopperEntity.Id, SharedListShopperEntity.GetEvents(SharedListShopperEntity.AtSequence)));
+                    }
+                    else
+                    {
+                        result = Result<List<SharedListShopperRecord>>.Error($"List Item does not belong to '{_userService.CurrentUserId}'");
+                    }
                 }
                 else
                 {
@@ -85,7 +92,7 @@ public class DeleteSharedListShopperCommandHandler : DirtyCommandHandler<SharedL
                 }
 
             }
-            result = entities != null
+            result = entities != null && entities.Count() > 0
                       ? Result<List<SharedListShopperRecord>>.Success(_mapper.Map<List<SharedListShopperRecord>>(entities))
                       : Result<List<SharedListShopperRecord>>.Error(FailedToCreateMessage(command));
 

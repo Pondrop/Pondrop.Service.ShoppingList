@@ -61,29 +61,37 @@ public class UpdateShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
 
                 if (shoppingListEntity is not null)
                 {
-                    var evtPayload = new UpdateShoppingList(
-                        shoppingList.Id,
-                        shoppingList.Name,
-                        shoppingListEntity.ShoppingListType,
-                    shoppingListEntity.SelectedStoreIds,
-                    shoppingListEntity.SharedListShopperIds,
-                    shoppingListEntity.ListItemIds,
-                    shoppingList.SortOrder);
-                    var createdBy = _userService.CurrentUserName();
-
-                    var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
-
-                    if (!success)
+                    if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
                     {
-                        await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
-                        success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                        var evtPayload = new UpdateShoppingList(
+                            shoppingList.Id,
+                            shoppingList.Name,
+                            shoppingListEntity.ShoppingListType,
+                        shoppingListEntity.SelectedStoreIds,
+                        shoppingListEntity.SharedListShopperIds,
+                        shoppingListEntity.ListItemIds,
+                        shoppingList.SortOrder);
+                        var createdBy = _userService.CurrentUserName();
+
+                        var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+
+                        if (!success)
+                        {
+                            await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
+                            success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                        }
+
+                        await Task.WhenAll(
+                            InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
+
+                        if (success)
+                            entities.Add(shoppingListEntity);
                     }
-
-                    await Task.WhenAll(
-                        InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
-
-                    if (success)
-                        entities.Add(shoppingListEntity);
+                    else
+                    {
+                        result = Result<List<ShoppingListRecord>>.Error($"ShoppingList does not belong to: '{_userService.CurrentUserId}'");
+                        break;
+                    }
                 }
                 else
                 {

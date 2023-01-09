@@ -163,6 +163,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseSwaggerDocumentation(provider);
 
 app.UseAuthentication();
+app.UseMiddleware<JwtMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

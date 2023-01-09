@@ -3,6 +3,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Pondrop.Service.Interfaces;
+using Pondrop.Service.Interfaces.Services;
+using Pondrop.Service.Models.User;
 using Pondrop.Service.ShoppingList.Application.Models;
 using Pondrop.Service.ShoppingList.Application.Queries;
 using Pondrop.Service.ShoppingList.Domain.Models;
@@ -13,17 +15,20 @@ public class GetAllSharedListShopperQueryHandler : IRequestHandler<GetAllSharedL
 {
     private readonly ICheckpointRepository<SharedListShopperEntity> _checkpointRepository;
     private readonly IMapper _mapper;
+    private readonly IUserService _userService;
     private readonly IValidator<GetAllSharedListShoppersQuery> _validator;
     private readonly ILogger<GetAllSharedListShopperQueryHandler> _logger;
 
     public GetAllSharedListShopperQueryHandler(
         ICheckpointRepository<SharedListShopperEntity> checkpointRepository,
         IMapper mapper,
+        IUserService userService,
         IValidator<GetAllSharedListShoppersQuery> validator,
         ILogger<GetAllSharedListShopperQueryHandler> logger)
     {
         _checkpointRepository = checkpointRepository;
         _mapper = mapper;
+        _userService = userService;
         _validator = validator;
         _logger = logger;
     }
@@ -43,7 +48,13 @@ public class GetAllSharedListShopperQueryHandler : IRequestHandler<GetAllSharedL
 
         try
         {
-            var entities = await _checkpointRepository.GetAllAsync();
+
+            var query = $"SELECT * FROM c WHERE c.deletedUtc = null";
+
+            query += _userService.CurrentUserType() == UserType.Shopper
+                   ? $" AND c.createdBy = '{_userService.CurrentUserName()}'" : string.Empty;
+
+            var entities = await _checkpointRepository.QueryAsync(query);
             result = Result<List<SharedListShopperRecord>>.Success(_mapper.Map<List<SharedListShopperRecord>>(entities));
         }
         catch (Exception ex)

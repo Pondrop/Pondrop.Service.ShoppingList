@@ -59,10 +59,10 @@ public class GetListItemByShoppingListIdQueryHandler : IRequestHandler<GetListIt
                 return Result<List<ListItemRecord>?>.Error(errorMessage);
             }
 
-            var query = $"SELECT * FROM c WHERE c.id in ({string.Join(",", shoppingListEntity.ListItemIds?.Select(s => $"'{s}'").ToList())})";
+            var query = $"SELECT * FROM c WHERE c.id in ({string.Join(",", shoppingListEntity.ListItemIds?.Select(s => $"'{s}'").ToList())}) AND c.deletedUtc = null";
 
             query += _userService.CurrentUserType() == UserType.Shopper
-                   ? $" AND c.createdBy = '{_userService.CurrentUserId()}'" : string.Empty;
+                   ? $" AND c.createdBy = '{_userService.CurrentUserName()}'" : string.Empty;
 
             var entity = await _checkpointRepository.QueryAsync(query);
 

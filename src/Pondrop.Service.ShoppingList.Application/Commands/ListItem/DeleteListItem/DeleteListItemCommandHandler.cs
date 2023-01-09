@@ -62,7 +62,9 @@ public class DeleteListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
 
                 if (listItemEntity is not null)
                 {
-                    var evtPayload = new DeleteListItem(
+                    if (listItemEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                    {
+                        var evtPayload = new DeleteListItem(
                         listItem);
                     var createdBy = _userService.CurrentUserName();
 
@@ -78,6 +80,11 @@ public class DeleteListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
 
                     await Task.WhenAll(
                         InvokeDaprMethods(listItemEntity.Id, listItemEntity.GetEvents(listItemEntity.AtSequence)));
+                    }
+                    else
+                    {
+                        result = Result<List<ListItemRecord>>.Error($"List Item does not belong to '{_userService.CurrentUserId}'");
+                    }
                 }
                 else
                 {
@@ -85,7 +92,7 @@ public class DeleteListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
                 }
 
             }
-            result = entities != null
+            result = entities != null && entities.Count() > 0
                       ? Result<List<ListItemRecord>>.Success(_mapper.Map<List<ListItemRecord>>(entities))
                       : Result<List<ListItemRecord>>.Error(FailedToCreateMessage(command));
 

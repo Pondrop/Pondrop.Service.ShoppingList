@@ -58,7 +58,9 @@ public class RemoveListItemToShoppingListCommandHandler : DirtyCommandHandler<Sh
 
             if (shoppingListEntity is not null)
             {
-                foreach (var listItem in command.ListItemIds)
+                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                {
+                    foreach (var listItem in command.ListItemIds)
                     shoppingListEntity.ListItemIds.Remove(listItem);
 
                 var evtPayload = new UpdateShoppingList(
@@ -85,6 +87,11 @@ public class RemoveListItemToShoppingListCommandHandler : DirtyCommandHandler<Sh
                 result = success
                     ? Result<ShoppingListRecord>.Success(_mapper.Map<ShoppingListRecord>(shoppingListEntity))
                     : Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
+                }
+                else
+                {
+                    result = Result<ShoppingListRecord>.Error($"ShoppingList does not belong to '{_userService.CurrentUserId}'");
+                }
             }
             else
             {

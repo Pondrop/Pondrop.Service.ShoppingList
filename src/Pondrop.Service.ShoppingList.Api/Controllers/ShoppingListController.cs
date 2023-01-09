@@ -90,6 +90,23 @@ public class ShoppingListController : ControllerBase
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }
 
+    [HttpDelete]
+    [Route("remove")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RemoveShoppingList([FromBody] DeleteShoppingListCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return await result.MatchAsync<IActionResult>(
+            async i =>
+            {
+                        await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = i.Id });
+
+                return new OkObjectResult(i);
+            },
+            (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
+    }
+
     //[HttpPost]
     //[Route("listitem/add")]
     //[ProducesResponseType(StatusCodes.Status201Created)]

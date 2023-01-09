@@ -3,6 +3,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Pondrop.Service.Interfaces;
+using Pondrop.Service.Interfaces.Services;
+using Pondrop.Service.Models.User;
 using Pondrop.Service.ShoppingList.Application.Models;
 using Pondrop.Service.ShoppingList.Domain.Models;
 
@@ -12,24 +14,27 @@ public class GetSharedListShopperByIdQueryHandler : IRequestHandler<GetSharedLis
 {
     private readonly ICheckpointRepository<SharedListShopperEntity> _checkpointRepository;
     private readonly IMapper _mapper;
+    private readonly IUserService _userService;
     private readonly IValidator<GetSharedListShopperByIdQuery> _validator;
     private readonly ILogger<GetSharedListShopperByIdQueryHandler> _logger;
 
     public GetSharedListShopperByIdQueryHandler(
         ICheckpointRepository<SharedListShopperEntity> checkpointRepository,
+        IUserService userService,
         IValidator<GetSharedListShopperByIdQuery> validator,
         IMapper mapper,
         ILogger<GetSharedListShopperByIdQueryHandler> logger)
     {
         _checkpointRepository = checkpointRepository;
         _mapper = mapper;
+        _userService = userService;
         _validator = validator;
         _logger = logger;
     }
 
-    public async Task<Result<SharedListShopperRecord?>> Handle(GetSharedListShopperByIdQuery query, CancellationToken cancellationToken)
+    public async Task<Result<SharedListShopperRecord?>> Handle(GetSharedListShopperByIdQuery request, CancellationToken cancellationToken)
     {
-        var validation = _validator.Validate(query);
+        var validation = _validator.Validate(request);
 
         if (!validation.IsValid)
         {
@@ -42,10 +47,15 @@ public class GetSharedListShopperByIdQueryHandler : IRequestHandler<GetSharedLis
 
         try
         {
-            var entity = await _checkpointRepository.GetByIdAsync(query.Id);
+            var query = $"SELECT * FROM c WHERE c.id = '{request.Id}' AND c.deletedUtc = null";
+
+            query += _userService.CurrentUserType() == UserType.Shopper
+                   ? $" AND c.createdBy = '{_userService.CurrentUserName()}'" : string.Empty;
+
+            var entity = await _checkpointRepository.QueryAsync(query);
 
             result = entity is not null
-                ? Result<SharedListShopperRecord?>.Success(_mapper.Map<SharedListShopperRecord>(entity))
+                ? Result<SharedListShopperRecord?>.Success(_mapper.Map<SharedListShopperRecord>(entity.FirstOrDefault()))
                 : Result<SharedListShopperRecord?>.Success(null);
         }
         catch (Exception ex)
