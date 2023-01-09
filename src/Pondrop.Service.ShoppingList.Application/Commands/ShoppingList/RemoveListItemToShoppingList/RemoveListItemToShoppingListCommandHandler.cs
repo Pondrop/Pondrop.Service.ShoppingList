@@ -58,7 +58,7 @@ public class RemoveListItemToShoppingListCommandHandler : DirtyCommandHandler<Sh
 
             if (shoppingListEntity is not null)
             {
-                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() ||_userService.CurrentUserType() == Service.Models.User.UserType.Admin)
                 {
                     foreach (var listItem in command.ListItemIds)
                     shoppingListEntity.ListItemIds.Remove(listItem);

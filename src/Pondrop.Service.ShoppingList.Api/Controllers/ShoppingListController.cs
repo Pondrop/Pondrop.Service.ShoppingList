@@ -98,11 +98,13 @@ public class ShoppingListController : ControllerBase
     {
         var result = await _mediator.Send(command);
         return await result.MatchAsync<IActionResult>(
-            async i =>
-            {
-                        await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = i.Id });
+           async items =>
+           {
+               if (items != null)
+                   foreach (var item in items)
+                       await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = item!.Id });
 
-                return new OkObjectResult(i);
+                return new OkObjectResult(items);
             },
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }

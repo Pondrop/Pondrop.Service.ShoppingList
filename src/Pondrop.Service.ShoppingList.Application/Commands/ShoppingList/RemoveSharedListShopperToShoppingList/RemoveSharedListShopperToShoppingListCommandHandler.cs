@@ -58,7 +58,7 @@ public class RemoveSharedListShopperToShoppingListCommandHandler : DirtyCommandH
 
             if (shoppingListEntity is not null)
             {
-                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() ||_userService.CurrentUserType() == Service.Models.User.UserType.Admin)
                 {
                     foreach (var sharedListShopperId in command.SharedListShopperIds)
                     shoppingListEntity.SharedListShopperIds.Remove(sharedListShopperId);

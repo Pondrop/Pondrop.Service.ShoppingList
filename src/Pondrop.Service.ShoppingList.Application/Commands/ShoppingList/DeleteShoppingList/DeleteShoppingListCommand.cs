@@ -5,8 +5,8 @@ using Pondrop.Service.ShoppingList.Domain.Models;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class DeleteShoppingListCommand : IRequest<Result<ShoppingListRecord>>
+public class DeleteShoppingListCommand : IRequest<Result<List<ShoppingListRecord>>>
 {
-    public Guid? Id { get; init; } = null;
+    public List<Guid>? Ids { get; init; } = null;
 }
 

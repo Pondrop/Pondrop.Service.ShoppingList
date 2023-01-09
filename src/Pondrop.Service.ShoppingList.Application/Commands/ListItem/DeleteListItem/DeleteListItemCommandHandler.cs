@@ -62,7 +62,7 @@ public class DeleteListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
 
                 if (listItemEntity is not null)
                 {
-                    if (listItemEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                    if (listItemEntity.CreatedBy == _userService.CurrentUserName() ||_userService.CurrentUserType() == Service.Models.User.UserType.Admin)
                     {
                         var evtPayload = new DeleteListItem(
                         listItem);

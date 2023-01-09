@@ -6,8 +6,10 @@ public class DeleteShoppingListCommandHandlerValidator : AbstractValidator<Delet
 {
     public DeleteShoppingListCommandHandlerValidator()
     {
-        
-        RuleFor(x => x.Id).NotNull();
-       RuleFor(x => x.Id).NotEmpty();
+
+        RuleForEach(x => x.Ids).ChildRules(id =>
+        {
+            id.RuleFor(x => x).NotEmpty();
+        });
     }
 }

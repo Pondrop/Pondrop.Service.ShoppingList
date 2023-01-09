@@ -11,7 +11,7 @@ using Pondrop.Service.ShoppingList.Domain.Events.ShoppingList;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
-public class DeleteShoppingListCommandHandler : DirtyCommandHandler<ShoppingListEntity, DeleteShoppingListCommand, Result<ShoppingListRecord>>
+public class DeleteShoppingListCommandHandler : DirtyCommandHandler<ShoppingListEntity, DeleteShoppingListCommand, Result<List<ShoppingListRecord>>>
 {
     private readonly IEventRepository _eventRepository;
     private readonly ICheckpointRepository<ShoppingListEntity> _ShoppingListCheckpointRepository;
@@ -38,62 +38,69 @@ public class DeleteShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
         _logger = logger;
     }
 
-    public override async Task<Result<ShoppingListRecord>> Handle(DeleteShoppingListCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<List<ShoppingListRecord>>> Handle(DeleteShoppingListCommand command, CancellationToken cancellationToken)
     {
         var validation = _validator.Validate(command);
 
         if (!validation.IsValid)
         {
-            var errorMessage = $"Update list item failed, errors on validation {validation}";
+            var errorMessage = $"Update ShoppingList failed, errors on validation {validation}";
             _logger.LogError(errorMessage);
-            return Result<ShoppingListRecord>.Error(errorMessage);
+            return Result<List<ShoppingListRecord>>.Error(errorMessage);
         }
 
-        var result = default(Result<ShoppingListRecord>);
+        var result = default(Result<List<ShoppingListRecord>>);
 
         try
         {
-            var ShoppingListEntity = await _ShoppingListCheckpointRepository.GetByIdAsync(command.Id.Value);
-            ShoppingListEntity ??= await GetFromStreamAsync(command.Id.Value);
-
-            if (ShoppingListEntity is not null)
+            var entities = new List<ShoppingListEntity>();
+            foreach (var ShoppingList in command.Ids)
             {
-                if (ShoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                var ShoppingListEntity = await _ShoppingListCheckpointRepository.GetByIdAsync(ShoppingList);
+                ShoppingListEntity ??= await GetFromStreamAsync(ShoppingList);
+
+                if (ShoppingListEntity is not null)
                 {
-                    var evtPayload = new DeleteShoppingList(
-                    command.Id.Value);
-                    var createdBy = _userService.CurrentUserName();
-
-                    var success = await UpdateStreamAsync(ShoppingListEntity, evtPayload, createdBy);
-
-                    if (!success)
+                    if (ShoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserType() == Service.Models.User.UserType.Admin)
                     {
-                        await _ShoppingListCheckpointRepository.FastForwardAsync(ShoppingListEntity);
-                        success = await UpdateStreamAsync(ShoppingListEntity, evtPayload, createdBy);
+                        var evtPayload = new DeleteShoppingList(
+                        ShoppingList);
+                        var createdBy = _userService.CurrentUserName();
+
+                        var success = await UpdateStreamAsync(ShoppingListEntity, evtPayload, createdBy);
+
+                        if (!success)
+                        {
+                            await _ShoppingListCheckpointRepository.FastForwardAsync(ShoppingListEntity);
+                            success = await UpdateStreamAsync(ShoppingListEntity, evtPayload, createdBy);
+                        }
+
+                        entities.Add(ShoppingListEntity);
+
+                        await Task.WhenAll(
+                            InvokeDaprMethods(ShoppingListEntity.Id, ShoppingListEntity.GetEvents(ShoppingListEntity.AtSequence)));
                     }
-
-                    await Task.WhenAll(
-                        InvokeDaprMethods(ShoppingListEntity.Id, ShoppingListEntity.GetEvents(ShoppingListEntity.AtSequence)));
-
-                    result = success
-                              ? Result<ShoppingListRecord>.Success(_mapper.Map<ShoppingListRecord>(ShoppingListEntity))
-                              : Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
+                    else
+                    {
+                        result = Result<List<ShoppingListRecord>>.Error($"ShoppingList does not belong to '{_userService.CurrentUserId}'");
+                    }
                 }
                 else
                 {
-                    result = Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
+                    result = Result<List<ShoppingListRecord>>.Error($"ShoppingList does not exist '{ShoppingList}'");
                 }
-            }
-            else
-            {
-                result = Result<ShoppingListRecord>.Error($"Shopping List does not exist '{command.Id}'");
-            }
 
-    }
+            }
+            result = entities != null && entities.Count() > 0
+                      ? Result<List<ShoppingListRecord>>.Success(_mapper.Map<List<ShoppingListRecord>>(entities))
+                      : Result<List<ShoppingListRecord>>.Error(FailedToCreateMessage(command));
+
+
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, FailedToCreateMessage(command));
-            result = Result<ShoppingListRecord>.Error(ex);
+            result = Result<List<ShoppingListRecord>>.Error(ex);
         }
 
         return result;

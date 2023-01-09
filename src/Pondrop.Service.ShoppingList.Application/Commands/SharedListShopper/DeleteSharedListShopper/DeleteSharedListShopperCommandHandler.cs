@@ -62,7 +62,7 @@ public class DeleteSharedListShopperCommandHandler : DirtyCommandHandler<SharedL
 
                 if (SharedListShopperEntity is not null)
                 {
-                    if (SharedListShopperEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserName() == "admin")
+                    if (SharedListShopperEntity.CreatedBy == _userService.CurrentUserName() ||_userService.CurrentUserType() == Service.Models.User.UserType.Admin)
                     {
                         var evtPayload = new DeleteSharedListShopper(
                         SharedListShopper);
