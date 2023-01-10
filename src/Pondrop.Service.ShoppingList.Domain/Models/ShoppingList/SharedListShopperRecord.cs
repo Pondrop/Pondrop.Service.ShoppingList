@@ -5,8 +5,9 @@ namespace Pondrop.Service.ShoppingList.Domain.Models;
 
 public record SharedListShopperRecord(
     Guid Id,
-    Guid ShopperId,
+    Guid UserId,
     ListPrivilegeType ListPrivilege,
+    int SortOrder,
     string CreatedBy,
     string UpdatedBy,
     DateTime CreatedUtc,
@@ -18,6 +19,7 @@ public record SharedListShopperRecord(
         Guid.Empty,
         Guid.Empty,
         ListPrivilegeType.unknown,
+        0,
         string.Empty,
         string.Empty,
         DateTime.MinValue,

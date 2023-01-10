@@ -8,5 +8,6 @@ public class ShoppingListProfile : Profile
     public ShoppingListProfile()
     {
         CreateMap<ShoppingListEntity, ShoppingListRecord>();
+        CreateMap<ShoppingListEntity, ShoppingListResponseRecord>();
     }
 }

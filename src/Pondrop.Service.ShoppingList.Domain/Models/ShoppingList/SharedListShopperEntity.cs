@@ -14,7 +14,8 @@ public record SharedListShopperEntity : EventEntity
     {
         Id = Guid.Empty;
         ListPrivilege = ListPrivilegeType.unknown;
-        ShopperId = Guid.Empty;
+        SortOrder = 0;
+        UserId = Guid.Empty;
     }
 
     public SharedListShopperEntity(IEnumerable<IEvent> events) : this()
@@ -25,17 +26,20 @@ public record SharedListShopperEntity : EventEntity
         }
     }
 
-    public SharedListShopperEntity(Guid shopperId, ListPrivilegeType listPrivilege, string createdBy) : this()
+    public SharedListShopperEntity(Guid userId, ListPrivilegeType listPrivilege, int sortOrder, string createdBy) : this()
     {
-        var create = new CreateSharedListShopper(Guid.NewGuid(), shopperId, listPrivilege);
+        var create = new CreateSharedListShopper(Guid.NewGuid(), userId, listPrivilege, sortOrder);
         Apply(create, createdBy);
     }
 
-    [JsonProperty(PropertyName = "shopperId")]
-    public Guid ShopperId { get; private set; }
+    [JsonProperty(PropertyName = "userId")]
+    public Guid UserId { get; private set; }
 
     [JsonProperty(PropertyName = "listPrivilege")]
     public ListPrivilegeType ListPrivilege { get; private set; }
+
+    [JsonProperty(PropertyName = "sortOrder")]
+    public int SortOrder { get; private set; }
 
     protected sealed override void Apply(IEvent eventToApply)
     {
@@ -74,8 +78,9 @@ public record SharedListShopperEntity : EventEntity
     private void When(CreateSharedListShopper create, string createdBy, DateTime createdUtc)
     {
         Id = create.Id;
-        ShopperId = create.ShopperId;
+        UserId = create.UserId;
         ListPrivilege = create.ListPrivilege;
+        SortOrder = create.SortOrder;
         CreatedBy = UpdatedBy = createdBy;
         CreatedUtc = UpdatedUtc = createdUtc;
     }
@@ -83,14 +88,17 @@ public record SharedListShopperEntity : EventEntity
 
     private void When(UpdateSharedListShopper update, string createdBy, DateTime createdUtc)
     {
-        var oldShopperId = ShopperId;
+        var oldShopperId = UserId;
         var oldListPrivilege = ListPrivilege;
+        var oldSortOrder = SortOrder; ;
 
         Id = update.Id;
-        ShopperId = update.ShopperId;
+        UserId = update.UserId;
         ListPrivilege = update.ListPrivilege;
+        SortOrder = update.SortOrder;
 
-        if (oldShopperId != ShopperId ||
+        if (oldShopperId != UserId ||
+            oldSortOrder != SortOrder ||
             oldListPrivilege != ListPrivilege)
         {
             UpdatedBy = createdBy;

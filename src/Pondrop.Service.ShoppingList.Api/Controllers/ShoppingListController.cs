@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pondrop.Service.Interfaces;
+using Pondrop.Service.Interfaces.Services;
 using Pondrop.Service.ShoppingList.Api.Services;
 using Pondrop.Service.ShoppingList.Application.Commands;
 using Pondrop.Service.ShoppingList.Application.Queries;
@@ -15,6 +16,7 @@ public class ShoppingListController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IServiceBusService _serviceBusService;
+    private readonly IUserService _userService;
     private readonly IRebuildCheckpointQueueService _rebuildCheckpointQueueService;
     private readonly ILogger<ShoppingListController> _logger;
 
@@ -22,10 +24,12 @@ public class ShoppingListController : ControllerBase
         IMediator mediator,
         IServiceBusService serviceBusService,
         IRebuildCheckpointQueueService rebuildCheckpointQueueService,
+        IUserService userService,
         ILogger<ShoppingListController> logger)
     {
         _mediator = mediator;
         _serviceBusService = serviceBusService;
+        _userService = userService;
         _rebuildCheckpointQueueService = rebuildCheckpointQueueService;
         _logger = logger;
     }
@@ -65,8 +69,32 @@ public class ShoppingListController : ControllerBase
         return await result.MatchAsync<IActionResult>(
             async i =>
             {
-                await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = i!.Id });
-                return StatusCode(StatusCodes.Status201Created, i);
+                await _mediator.Send(new UpdateShoppingListCheckpointByIdCommand() { Id = i!.Id });
+                var sharedListShopperResult = await _mediator.Send(new CreateSharedListShopperCommand()
+                {
+                    ShoppingListId = i!.Id,
+                    SharedListShoppers = new List<SharedListShopperCreateRecord>() { new SharedListShopperCreateRecord()
+                    { ListPrivilege = Domain.Enums.ShoppingList.ListPrivilegeType.admin, UserId = new Guid(_userService.CurrentUserId()) } }
+                });
+
+                return await sharedListShopperResult.MatchAsync<IActionResult>(
+                     async s =>
+                     {
+                         await _mediator.Send(new UpdateSharedListShopperCheckpointByIdCommand() { Id = s!.FirstOrDefault().Id });
+                         var addShopperToShoppingListResult = await _mediator.Send(new AddSharedListShoppersToShoppingListCommand()
+                         {
+                             ShoppingListId = i!.Id,
+                             SharedListShopperIds = new List<Guid>() { s!.FirstOrDefault().Id }
+                         });
+                        
+                         return await addShopperToShoppingListResult.MatchAsync<IActionResult>(
+                             async a =>
+                             {
+                                 await _mediator.Send(new UpdateShoppingListCheckpointByIdCommand() { Id = a!.Id });
+                                 return StatusCode(StatusCodes.Status201Created, a);
+                                 i!.SharedListShopperIds.Add(sharedListShopperResult.Value.FirstOrDefault().Id);
+                             }, (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
+                     }, (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
             },
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }
@@ -90,24 +118,24 @@ public class ShoppingListController : ControllerBase
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }
 
-    [HttpDelete]
-    [Route("remove")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RemoveShoppingList([FromBody] DeleteShoppingListCommand command)
-    {
-        var result = await _mediator.Send(command);
-        return await result.MatchAsync<IActionResult>(
-           async items =>
-           {
-               if (items != null)
-                   foreach (var item in items)
-                       await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = item!.Id });
+    //[HttpDelete]
+    //[Route("remove")]
+    //[ProducesResponseType(StatusCodes.Status200OK)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //public async Task<IActionResult> RemoveShoppingList([FromBody] DeleteShoppingListCommand command)
+    //{
+    //    var result = await _mediator.Send(command);
+    //    return await result.MatchAsync<IActionResult>(
+    //       async items =>
+    //       {
+    //           if (items != null)
+    //               foreach (var item in items)
+    //                   await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = item!.Id });
 
-                return new OkObjectResult(items);
-            },
-            (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
-    }
+    //            return new OkObjectResult(items);
+    //        },
+    //        (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
+    //}
 
     //[HttpPost]
     //[Route("listitem/add")]

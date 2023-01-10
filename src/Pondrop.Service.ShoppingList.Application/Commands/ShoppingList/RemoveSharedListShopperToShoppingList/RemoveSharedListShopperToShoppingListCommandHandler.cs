@@ -8,6 +8,8 @@ using Pondrop.Service.ShoppingList.Domain.Models;
 using Pondrop.Service.Interfaces;
 using Pondrop.Service.Interfaces.Services;
 using Pondrop.Service.ShoppingList.Domain.Events.ShoppingList;
+using Pondrop.Service.Models;
+using Pondrop.Service.Events;
 
 namespace Pondrop.Service.ShoppingList.Application.Commands;
 
@@ -58,35 +60,45 @@ public class RemoveSharedListShopperToShoppingListCommandHandler : DirtyCommandH
 
             if (shoppingListEntity is not null)
             {
-                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() ||_userService.CurrentUserType() == Service.Models.User.UserType.Admin)
+                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserType() == Service.Models.User.UserType.Admin)
                 {
                     foreach (var sharedListShopperId in command.SharedListShopperIds)
-                    shoppingListEntity.SharedListShopperIds.Remove(sharedListShopperId);
+                        shoppingListEntity.SharedListShopperIds.Remove(sharedListShopperId);
 
-                var evtPayload = new UpdateShoppingList(
-                    shoppingListEntity.Id,
-                    shoppingListEntity.Name,
-                    shoppingListEntity.ShoppingListType,
-                    shoppingListEntity.SelectedStoreIds,
-                    shoppingListEntity.SharedListShopperIds,
-                    shoppingListEntity.ListItemIds,
-                    shoppingListEntity.SortOrder);
-                var createdBy = _userService.CurrentUserName();
+                    IEventPayload evtPayload = null;
 
-                var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                    if (shoppingListEntity.SharedListShopperIds.Count > 0)
+                    {
+                        evtPayload = new UpdateShoppingList(
+                            shoppingListEntity.Id,
+                            shoppingListEntity.Name,
+                            shoppingListEntity.ShoppingListType,
+                            shoppingListEntity.SelectedStoreIds,
+                            shoppingListEntity.SharedListShopperIds,
+                            shoppingListEntity.ListItemIds);
+                    }
+                    else
+                    {
+                        evtPayload = new DeleteShoppingList(
+                            shoppingListEntity.Id);
+                    }
 
-                if (!success)
-                {
-                    await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
-                    success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
-                }
+                    var createdBy = _userService.CurrentUserName();
 
-                await Task.WhenAll(
-                    InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
+                    var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
 
-                result = success
-                    ? Result<ShoppingListRecord>.Success(_mapper.Map<ShoppingListRecord>(shoppingListEntity))
-                    : Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
+                    if (!success)
+                    {
+                        await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
+                        success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                    }
+
+                    await Task.WhenAll(
+                        InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
+
+                    result = success
+                        ? Result<ShoppingListRecord>.Success(_mapper.Map<ShoppingListRecord>(shoppingListEntity))
+                        : Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
                 }
                 else
                 {

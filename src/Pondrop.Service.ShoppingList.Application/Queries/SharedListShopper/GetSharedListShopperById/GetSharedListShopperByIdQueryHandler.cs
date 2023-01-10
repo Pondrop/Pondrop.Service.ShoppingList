@@ -38,32 +38,62 @@ public class GetSharedListShopperByIdQueryHandler : IRequestHandler<GetSharedLis
 
         if (!validation.IsValid)
         {
-            var errorMessage = $"Get SharedListShopper by id failed {validation}";
+            var errorMessage = $"Get all stores failed {validation}";
             _logger.LogError(errorMessage);
-            return Result<SharedListShopperRecord?>.Error(errorMessage);
+            return Result<SharedListShopperRecord>.Error(errorMessage);
         }
 
-        var result = default(Result<SharedListShopperRecord?>);
+        var sharedListShoppers = await GetSharedListShoppersByIdAsync(_userService.CurrentUserId(), request.Id);
+
+        var result = default(Result<SharedListShopperRecord>);
 
         try
         {
-            var query = $"SELECT * FROM c WHERE c.id = '{request.Id}' AND c.deletedUtc = null";
-
-            query += _userService.CurrentUserType() == UserType.Shopper
-                   ? $" AND c.createdBy = '{_userService.CurrentUserName()}'" : string.Empty;
-
-            var entity = await _checkpointRepository.QueryAsync(query);
-
-            result = entity is not null
-                ? Result<SharedListShopperRecord?>.Success(_mapper.Map<SharedListShopperRecord>(entity.FirstOrDefault()))
-                : Result<SharedListShopperRecord?>.Success(null);
+            if (sharedListShoppers != null)
+            {
+                result = sharedListShoppers is not null && sharedListShoppers.Count > 0 ?
+                Result<SharedListShopperRecord>.Success(_mapper.Map<SharedListShopperRecord>(sharedListShoppers.FirstOrDefault())) :
+                Result<SharedListShopperRecord>.Success(null);
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
-            result = Result<SharedListShopperRecord?>.Error(ex);
+            result = Result<SharedListShopperRecord>.Error(ex);
         }
 
         return result;
     }
+
+
+    private async Task<List<SharedListShopperEntity>> GetSharedListShoppersByIdAsync(string userId, Guid sharedListShopperId)
+    {
+        const string userIdKey = "@userId";
+        const string sharedListShopperIdKey = "@sharedListShopperId"; 
+
+         var conditions = new List<string>();
+        var parameters = new Dictionary<string, string>();
+
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            conditions.Add($"c.userId = {userIdKey}");
+            parameters.Add(userIdKey, userId.ToString());
+        }
+        if (!string.IsNullOrEmpty(userId))
+        {
+            conditions.Add($"c.id = {sharedListShopperIdKey}");
+            parameters.Add(sharedListShopperIdKey, sharedListShopperId.ToString());
+        }
+
+        if (!conditions.Any())
+            return new List<SharedListShopperEntity>(0);
+
+        var sqlQueryText = $"SELECT * FROM c WHERE c.deletedUtc = null AND {string.Join(" AND ", conditions)}";
+
+        var affectedSharedListShoppers = await _checkpointRepository.QueryAsync(sqlQueryText, parameters);
+        return affectedSharedListShoppers;
+    }
+
+
 }

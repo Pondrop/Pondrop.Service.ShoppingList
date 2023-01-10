@@ -8,5 +8,6 @@ public class SharedListShopperProfile : Profile
     public SharedListShopperProfile()
     {
         CreateMap<SharedListShopperEntity, SharedListShopperRecord>();
+        CreateMap<SharedListShopperEntity, SharedListShopperResponseRecord>();
     }
 }

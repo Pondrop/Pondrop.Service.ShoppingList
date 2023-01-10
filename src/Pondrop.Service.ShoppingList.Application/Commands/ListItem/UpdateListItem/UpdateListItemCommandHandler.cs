@@ -67,7 +67,6 @@ public class UpdateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
                         var evtPayload = new UpdateListItem(
                         listItem.Id,
                         listItemEntity.ItemTitle,
-                        listItemEntity.AddedBy,
                         listItemEntity.SelectedCategoryId,
                         listItemEntity.Quantity,
                         listItemEntity.ItemNetSize,

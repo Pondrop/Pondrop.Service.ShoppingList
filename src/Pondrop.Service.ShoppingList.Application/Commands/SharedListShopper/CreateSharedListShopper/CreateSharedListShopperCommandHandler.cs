@@ -55,8 +55,9 @@ public class CreateSharedListShopperCommandHandler : DirtyCommandHandler<SharedL
             foreach (var sharedListShopper in command.SharedListShoppers)
             {
                 var SharedListShopperEntity = new SharedListShopperEntity(
-                    sharedListShopper.ShopperId,
+                    sharedListShopper.UserId,
                     sharedListShopper.ListPrivilege,
+                    0,
                     _userService.CurrentUserName());
 
                 var success = await _eventRepository.AppendEventsAsync(SharedListShopperEntity.StreamId, 0, SharedListShopperEntity.GetEvents());

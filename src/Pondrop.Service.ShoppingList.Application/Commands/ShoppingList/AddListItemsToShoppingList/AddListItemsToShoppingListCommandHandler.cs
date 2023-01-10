@@ -66,8 +66,7 @@ public class AddListItemToShoppingListCommandHandler : DirtyCommandHandler<Shopp
                     shoppingListEntity.ShoppingListType,
                     shoppingListEntity.SelectedStoreIds,
                     shoppingListEntity.SharedListShopperIds,
-                    shoppingListEntity.ListItemIds,
-                    shoppingListEntity.SortOrder);
+                    shoppingListEntity.ListItemIds);
                 var createdBy = _userService.CurrentUserName();
 
                 var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);

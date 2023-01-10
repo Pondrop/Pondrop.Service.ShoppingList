@@ -9,7 +9,7 @@ namespace Pondrop.Service.ShoppingList.Domain.Tests;
 
 public class SharedListShopperEntityTests
 {
-    private Guid ShopperId = Guid.NewGuid();
+    private Guid UserId = Guid.NewGuid();
     private const ListPrivilegeType ListPrivilege = ListPrivilegeType.admin;
     private const string CreatedBy = "user/admin1";
     private const string UpdatedBy = "user/admin2";
@@ -39,7 +39,7 @@ public class SharedListShopperEntityTests
         // assert
         Assert.NotNull(entity);
         Assert.NotEqual(Guid.Empty, entity.Id);
-        Assert.Equal(ShopperId, entity.ShopperId);
+        Assert.Equal(UserId, entity.UserId);
         Assert.Equal(ListPrivilege, entity.ListPrivilege);
         Assert.Equal(CreatedBy, entity.CreatedBy);
         Assert.Equal(1, entity.EventsCount);
@@ -54,18 +54,18 @@ public class SharedListShopperEntityTests
 
         var entity = GetNewSharedListShopper();
 
-        var updateEvent = new UpdateSharedListShopper(entity.Id, newShopperId, newListPrivilege);
+        var updateEvent = new UpdateSharedListShopper(entity.Id, newShopperId, newListPrivilege, 0);
 
         // act
         entity.Apply(updateEvent, UpdatedBy);
 
         // assert
         Assert.NotNull(entity);
-        Assert.Equal(updateEvent.ShopperId, newShopperId);
+        Assert.Equal(updateEvent.UserId, newShopperId);
         Assert.Equal(updateEvent.ListPrivilege, newListPrivilege);
         Assert.Equal(UpdatedBy, entity.UpdatedBy);
         Assert.Equal(2, entity.EventsCount);
     }
 
-    private SharedListShopperEntity GetNewSharedListShopper() => new SharedListShopperEntity(ShopperId, ListPrivilege, CreatedBy);
+    private SharedListShopperEntity GetNewSharedListShopper() => new SharedListShopperEntity(UserId, ListPrivilege, 0, CreatedBy);
 }

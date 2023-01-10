@@ -13,6 +13,8 @@ namespace Pondrop.Service.ShoppingList.Application.Queries;
 public class GetListItemByIdQueryHandler : IRequestHandler<GetListItemByIdQuery, Result<ListItemRecord?>>
 {
     private readonly ICheckpointRepository<ListItemEntity> _checkpointRepository;
+    private readonly ICheckpointRepository<ShoppingListEntity> _shoppingListCheckpointRepository;
+    private readonly ICheckpointRepository<SharedListShopperEntity> _sharedListShopperCheckpointRepository;
     private readonly IMapper _mapper;
     private readonly IUserService _userService;
     private readonly IValidator<GetListItemByIdQuery> _validator;
@@ -20,12 +22,16 @@ public class GetListItemByIdQueryHandler : IRequestHandler<GetListItemByIdQuery,
 
     public GetListItemByIdQueryHandler(
         ICheckpointRepository<ListItemEntity> checkpointRepository,
+        ICheckpointRepository<ShoppingListEntity> shoppingListCheckpointRepository,
+        ICheckpointRepository<SharedListShopperEntity> sharedListShopperCheckpointRepository,
         IValidator<GetListItemByIdQuery> validator,
         IUserService userService,
         IMapper mapper,
         ILogger<GetListItemByIdQueryHandler> logger)
     {
         _checkpointRepository = checkpointRepository;
+        _shoppingListCheckpointRepository = shoppingListCheckpointRepository;
+        _sharedListShopperCheckpointRepository = sharedListShopperCheckpointRepository;
         _mapper = mapper;
         _userService = userService;
         _validator = validator;
@@ -38,32 +44,79 @@ public class GetListItemByIdQueryHandler : IRequestHandler<GetListItemByIdQuery,
 
         if (!validation.IsValid)
         {
-            var errorMessage = $"Get ListItem by id failed {validation}";
+            var errorMessage = $"Get all stores failed {validation}";
             _logger.LogError(errorMessage);
-            return Result<ListItemRecord?>.Error(errorMessage);
+            return Result<ListItemRecord>.Error(errorMessage);
         }
 
-        var result = default(Result<ListItemRecord?>);
+        var sharedListShoppers = await GetSharedListShoppersByIdAsync(_userService.CurrentUserId());
+
+        var result = default(Result<ListItemRecord>);
 
         try
         {
-            var query = $"SELECT * FROM c WHERE c.id = '{request.Id}' AND c.deletedUtc = null";
+            if (sharedListShoppers != null)
+            {
+                var query = $"SELECT * FROM c WHERE c.deletedUtc = null";
 
-            query += _userService.CurrentUserType() == UserType.Shopper
-                   ? $" AND c.createdBy = '{_userService.CurrentUserName()}'" : string.Empty;
+                if (_userService.CurrentUserType() == UserType.Shopper)
+                {
+                    var sharedListShopperIdString = string.Join(',', sharedListShoppers.Select(s => $"'{s.Id}'"));
+                    query += $" AND ARRAY_CONTAINS(c.sharedListShopperIds, {sharedListShopperIdString})";
+                }
 
-            var entity = await _checkpointRepository.QueryAsync(query);
+                var entities = await _shoppingListCheckpointRepository.QueryAsync(query);
 
-            result = entity is not null
-                ? Result<ListItemRecord?>.Success(_mapper.Map<ListItemRecord>(entity.FirstOrDefault()))
-                : Result<ListItemRecord?>.Success(null);
+                var entity = entities.FirstOrDefault();
+                if (entity == null && !entity.ListItemIds.Any(l => l == request.Id))
+                {
+
+                    var errorMessage = $"No ShoppingList found.";
+                    _logger.LogError(errorMessage);
+                    return Result<ListItemRecord?>.Error(errorMessage);
+                }
+
+                var listItemQuery = $"SELECT * FROM c WHERE c.id = '{request.Id}' AND c.deletedUtc = null";
+
+                var listItemEntities = await _checkpointRepository.QueryAsync(listItemQuery);
+
+                var responseRecord = _mapper.Map<ListItemRecord>(listItemEntities.FirstOrDefault());
+
+                result = responseRecord is not null ?
+                    Result<ListItemRecord>.Success(responseRecord) :
+                    Result<ListItemRecord>.Success(null);
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
-            result = Result<ListItemRecord?>.Error(ex);
+            result = Result<ListItemRecord>.Error(ex);
         }
 
         return result;
+    }
+
+
+    private async Task<List<SharedListShopperEntity>> GetSharedListShoppersByIdAsync(string userId)
+    {
+        const string userIdKey = "@userId";
+
+        var conditions = new List<string>();
+        var parameters = new Dictionary<string, string>();
+
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            conditions.Add($"c.userId = {userIdKey}");
+            parameters.Add(userIdKey, userId.ToString());
+        }
+
+        if (!conditions.Any())
+            return new List<SharedListShopperEntity>(0);
+
+        var sqlQueryText = $"SELECT * FROM c WHERE c.deletedUtc = null AND {string.Join(" AND ", conditions)}";
+
+        var affectedSharedListShoppers = await _sharedListShopperCheckpointRepository.QueryAsync(sqlQueryText, parameters);
+        return affectedSharedListShoppers;
     }
 }

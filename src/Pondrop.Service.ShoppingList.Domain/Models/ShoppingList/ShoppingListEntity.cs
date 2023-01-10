@@ -17,7 +17,6 @@ public record ShoppingListEntity : EventEntity
         SelectedStoreIds = new List<Guid>();
         ListItemIds = new List<Guid>();
         SharedListShopperIds = new List<Guid>();
-        SortOrder = 0;
     }
 
     public ShoppingListEntity(IEnumerable<IEvent> events) : this()
@@ -28,9 +27,9 @@ public record ShoppingListEntity : EventEntity
         }
     }
 
-    public ShoppingListEntity(string name, ShoppingListType? shoppingListType, List<Guid>? selectedStoreIds, List<Guid>? sharedListShopperIds, List<Guid>? listItemIds, int sortOrder, string createdBy) : this()
+    public ShoppingListEntity(string name, ShoppingListType? shoppingListType, List<Guid>? selectedStoreIds, List<Guid>? sharedListShopperIds, List<Guid>? listItemIds,string createdBy) : this()
     {
-        var create = new CreateShoppingList(Guid.NewGuid(), name, shoppingListType, selectedStoreIds, sharedListShopperIds, listItemIds, sortOrder);
+        var create = new CreateShoppingList(Guid.NewGuid(), name, shoppingListType, selectedStoreIds, sharedListShopperIds, listItemIds);
         Apply(create, createdBy);
     }
 
@@ -48,9 +47,6 @@ public record ShoppingListEntity : EventEntity
 
     [JsonProperty(PropertyName = "listItemIds")]
     public List<Guid>? ListItemIds { get; private set; }
-
-    [JsonProperty(PropertyName = "sortOrder")]
-    public int SortOrder { get; private set; }
 
     protected sealed override void Apply(IEvent eventToApply)
     {
@@ -97,7 +93,6 @@ public record ShoppingListEntity : EventEntity
         SelectedStoreIds = create.SelectedStoreIds;
         SharedListShopperIds = create.SharedListShopperIds;
         ListItemIds = create.ListItemIds;
-        SortOrder = create.SortOrder;
 
         CreatedBy = UpdatedBy = createdBy;
         CreatedUtc = UpdatedUtc = createdUtc;
@@ -110,20 +105,17 @@ public record ShoppingListEntity : EventEntity
         var oldSelectedStoreIds = SelectedStoreIds;
         var oldSharedListShopperIds = SharedListShopperIds;
         var oldListItemIds = ListItemIds;
-        var oldSortOrder = SortOrder;
 
         Name = update.Name;
         ShoppingListType = update.ShoppingListType;
         SelectedStoreIds = update.SelectedStoreIds;
         SharedListShopperIds = update.SharedListShopperIds;
         ListItemIds = update.ListItemIds;
-        SortOrder = update.SortOrder;
 
         if (oldName != Name ||
             oldShoppingListType != ShoppingListType ||
             oldSelectedStoreIds != SelectedStoreIds ||
             oldSharedListShopperIds != SharedListShopperIds ||
-            oldSortOrder != SortOrder ||
             oldListItemIds != ListItemIds)
         {
             UpdatedBy = createdBy;

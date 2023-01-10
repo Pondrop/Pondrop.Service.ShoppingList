@@ -8,5 +8,4 @@ public record UpdateShoppingList(
     ShoppingListType? ShoppingListType,
     List<Guid>? SelectedStoreIds,
     List<Guid>? SharedListShopperIds,
-    List<Guid>? ListItemIds,
-    int SortOrder) : EventPayload;
+    List<Guid>? ListItemIds) : EventPayload;

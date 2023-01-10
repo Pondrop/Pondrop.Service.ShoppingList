@@ -69,8 +69,7 @@ public class UpdateShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
                             shoppingListEntity.ShoppingListType,
                         shoppingListEntity.SelectedStoreIds,
                         shoppingListEntity.SharedListShopperIds,
-                        shoppingListEntity.ListItemIds,
-                        shoppingList.SortOrder);
+                        shoppingListEntity.ListItemIds);
                         var createdBy = _userService.CurrentUserName();
 
                         var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);

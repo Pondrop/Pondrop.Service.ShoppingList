@@ -69,36 +69,56 @@ public class SharedListShopperController : ControllerBase
 
 
 
-    [HttpPost]
-    [Route("create")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateSharedListShopper([FromBody] CreateSharedListShopperCommand command)
-    {
+    //[HttpPost]
+    //[Route("create")]
+    //[ProducesResponseType(StatusCodes.Status201Created)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //public async Task<IActionResult> CreateSharedListShopper([FromBody] CreateSharedListShopperCommand command)
+    //{
 
+    //    var result = await _mediator.Send(command);
+    //    return await result.MatchAsync<IActionResult>(
+    //        async items =>
+    //        {
+    //            if (items is null)
+    //                return StatusCode(StatusCodes.Status400BadRequest);
+
+    //            foreach (var i in items)
+    //            {
+    //                await _serviceBusService.SendMessageAsync(new UpdateSharedListShopperCheckpointByIdCommand() { Id = i!.Id });
+    //            }
+
+    //            var updateResult = await _mediator!.Send(new AddSharedListShoppersToShoppingListCommand() { ShoppingListId = command.ShoppingListId, SharedListShopperIds = items?.Select(i => i.Id)?.ToList() });
+    //            return await updateResult.MatchAsync<IActionResult>(
+    //                async s =>
+    //                {
+    //                    await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = s!.Id });
+    //                    return StatusCode(StatusCodes.Status201Created, items);
+    //                },
+    //                (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg))); ;
+    //        },
+    //        (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
+    //}
+
+    [HttpPut]
+    [Route("update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateSharedListShopper([FromBody] UpdateSharedListShopperCommand command)
+    {
         var result = await _mediator.Send(command);
         return await result.MatchAsync<IActionResult>(
             async items =>
             {
-                if (items is null)
-                    return StatusCode(StatusCodes.Status400BadRequest);
+                if (items != null)
+                    foreach (var item in items)
+                        await _serviceBusService.SendMessageAsync(new UpdateSharedListShopperCheckpointByIdCommand() { Id = item!.Id });
 
-                foreach (var i in items)
-                {
-                    await _serviceBusService.SendMessageAsync(new UpdateSharedListShopperCheckpointByIdCommand() { Id = i!.Id });
-                }
-
-                var updateResult = await _mediator!.Send(new AddSharedListShoppersToShoppingListCommand() { ShoppingListId = command.ShoppingListId, SharedListShopperIds = items?.Select(i => i.Id)?.ToList() });
-                return await updateResult.MatchAsync<IActionResult>(
-                    async s =>
-                    {
-                        await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = s!.Id });
-                        return StatusCode(StatusCodes.Status201Created, items);
-                    },
-                    (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg))); ;
+                return new OkObjectResult(items);
             },
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }
+
 
     [HttpDelete]
     [Route("remove")]

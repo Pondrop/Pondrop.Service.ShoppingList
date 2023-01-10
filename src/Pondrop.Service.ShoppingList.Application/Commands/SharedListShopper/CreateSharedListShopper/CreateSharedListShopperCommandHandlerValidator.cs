@@ -10,7 +10,7 @@ public class CreateSharedListShopperCommandHandlerValidator : AbstractValidator<
         RuleFor(x => x.ShoppingListId).NotEmpty(); 
         RuleForEach(x => x.SharedListShoppers).ChildRules(shareListShopper =>
         {
-            shareListShopper.RuleFor(x => x.ShopperId).NotEmpty();
+            shareListShopper.RuleFor(x => x.UserId).NotEmpty();
         });
     }
 }

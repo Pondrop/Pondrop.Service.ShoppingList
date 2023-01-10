@@ -6,7 +6,6 @@ namespace Pondrop.Service.ShoppingList.Domain.Models;
 public record ListItemRecord(
     Guid Id,
     string ItemTitle,
-    Guid AddedBy,
     Guid SelectedCategoryId,
     int Quantity,
     double ItemNetSize,
@@ -26,7 +25,6 @@ public record ListItemRecord(
     public ListItemRecord() : this(
         Guid.Empty,
         string.Empty,
-        Guid.Empty,
         Guid.Empty,
         0,
         0,

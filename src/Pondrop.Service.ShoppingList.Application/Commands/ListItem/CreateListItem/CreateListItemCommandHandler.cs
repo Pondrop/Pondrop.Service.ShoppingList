@@ -56,7 +56,6 @@ public class CreateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
             {
                 var ListItemEntity = new ListItemEntity(
                 listItem.ItemTitle,
-                listItem.AddedBy,
                 listItem.SelectedCategoryId,
                 listItem.Quantity,
                 listItem.ItemNetSize,

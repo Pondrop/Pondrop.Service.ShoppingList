@@ -12,7 +12,6 @@ public class CreateListItemCommand : IRequest<Result<List<ListItemRecord>>>
 
 public record ListItemCreateRecord(
     string ItemTitle,
-    Guid AddedBy,
     Guid SelectedCategoryId,
     int Quantity,
     double ItemNetSize,
@@ -25,7 +24,6 @@ public record ListItemCreateRecord(
 {
     public ListItemCreateRecord() : this(
         string.Empty,
-        Guid.Empty,
         Guid.Empty,
         0,
         0,

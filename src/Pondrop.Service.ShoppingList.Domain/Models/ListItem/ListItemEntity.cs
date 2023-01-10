@@ -14,7 +14,6 @@ public record ListItemEntity : EventEntity
     {
         Id = Guid.Empty;
         ItemTitle = string.Empty;
-        AddedBy = Guid.Empty;
         SelectedCategoryId = Guid.Empty;
         Quantity = 0;
         ItemNetSize = 0;
@@ -34,17 +33,14 @@ public record ListItemEntity : EventEntity
         }
     }
 
-    public ListItemEntity(string itemTitle, Guid addedBy, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, Guid? storeId, int sortOrder, bool @checked, string createdBy) : this()
+    public ListItemEntity(string itemTitle, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, Guid? storeId, int sortOrder, bool @checked, string createdBy) : this()
     {
-        var create = new CreateListItem(Guid.NewGuid(), itemTitle, addedBy, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId, storeId, sortOrder, @checked);
+        var create = new CreateListItem(Guid.NewGuid(), itemTitle, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId, storeId, sortOrder, @checked);
         Apply(create, createdBy);
     }
 
     [JsonProperty(PropertyName = "itemTitle")]
     public string ItemTitle { get; private set; }
-
-    [JsonProperty(PropertyName = "addedBy")]
-    public Guid AddedBy { get; private set; }
 
     [JsonProperty(PropertyName = "selectedCategoryId")]
     public Guid SelectedCategoryId { get; private set; }
@@ -112,7 +108,6 @@ public record ListItemEntity : EventEntity
     {
         Id = create.Id;
         ItemTitle = create.ItemTitle;
-        AddedBy = create.AddedBy;
         SelectedCategoryId = create.SelectedCategoryId;
         SelectedPreferenceIds = create.SelectedPreferenceIds;
         ItemNetSize = create.ItemNetSize;
@@ -130,7 +125,6 @@ public record ListItemEntity : EventEntity
     private void When(UpdateListItem update, string createdBy, DateTime createdUtc)
     {
         var oldItemTitle = ItemTitle;
-        var oldAddedBy = AddedBy;
         var oldSelectedCategoryId = SelectedCategoryId;
         var oldSelectedPreferenceIds = SelectedPreferenceIds;
         var oldItemNetSize = ItemNetSize;
@@ -143,7 +137,6 @@ public record ListItemEntity : EventEntity
 
         Id = update.Id;
         ItemTitle = update.ItemTitle;
-        AddedBy = update.AddedBy;
         SelectedCategoryId = update.SelectedCategoryId;
         SelectedPreferenceIds = update.SelectedPreferenceIds;
         ItemNetSize = update.ItemNetSize;
@@ -155,7 +148,6 @@ public record ListItemEntity : EventEntity
         Checked = update.Checked;
 
         if (oldItemTitle != ItemTitle ||
-            oldAddedBy != AddedBy ||
             oldSelectedCategoryId != SelectedCategoryId ||
             oldSelectedPreferenceIds != SelectedPreferenceIds ||
             oldItemNetSize != ItemNetSize ||

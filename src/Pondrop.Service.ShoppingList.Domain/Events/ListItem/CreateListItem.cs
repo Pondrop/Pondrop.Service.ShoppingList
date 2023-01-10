@@ -4,7 +4,6 @@ namespace Pondrop.Service.ShoppingList.Domain.Events.ListItem;
 public record CreateListItem(
     Guid Id,
     string ItemTitle,
-    Guid AddedBy,
     Guid SelectedCategoryId,
     int Quantity,
     double ItemNetSize,
