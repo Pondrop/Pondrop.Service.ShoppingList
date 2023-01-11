@@ -55,7 +55,7 @@ public class GetListItemByIdQueryHandler : IRequestHandler<GetListItemByIdQuery,
 
         try
         {
-            if (sharedListShoppers != null)
+            if (sharedListShoppers != null && sharedListShoppers.Count > 0)
             {
                 var query = $"SELECT * FROM c WHERE c.deletedUtc = null";
 
@@ -85,6 +85,10 @@ public class GetListItemByIdQueryHandler : IRequestHandler<GetListItemByIdQuery,
                 result = responseRecord is not null ?
                     Result<ListItemRecord>.Success(responseRecord) :
                     Result<ListItemRecord>.Success(null);
+            }
+            else
+            {
+                result = Result<ListItemRecord>.Success(null);
             }
         }
         catch (Exception ex)

@@ -55,7 +55,7 @@ public class GetListItemByShoppingListIdQueryHandler : IRequestHandler<GetListIt
 
         try
         {
-            if (sharedListShoppers != null)
+            if (sharedListShoppers != null && sharedListShoppers.Count > 0)
             {
                 var query = $"SELECT * FROM c WHERE c.deletedUtc = null AND c.id = '{request.ShoppingListId}'";
 
@@ -86,7 +86,11 @@ public class GetListItemByShoppingListIdQueryHandler : IRequestHandler<GetListIt
 
                 result = responseRecords is not null ?
                     Result<List<ListItemRecord>>.Success(responseRecords) :
-                    Result<List<ListItemRecord>>.Success(null);
+                    Result<List<ListItemRecord>>.Success(new List<ListItemRecord>());
+            }
+            else
+            {
+                result = Result<List<ListItemRecord>>.Success(new List<ListItemRecord>());
             }
         }
         catch (Exception ex)

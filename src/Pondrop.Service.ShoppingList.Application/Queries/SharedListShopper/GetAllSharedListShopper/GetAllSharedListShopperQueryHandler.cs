@@ -50,11 +50,15 @@ public class GetAllSharedListShopperQueryHandler : IRequestHandler<GetAllSharedL
 
         try
         {
-            if (sharedListShoppers != null)
+            if (sharedListShoppers != null && sharedListShoppers.Count > 0)
             {
                 result = sharedListShoppers is not null && sharedListShoppers.Count > 0 ?
                 Result<List<SharedListShopperRecord>>.Success(_mapper.Map<List<SharedListShopperRecord>>(sharedListShoppers)) :
-                Result<List<SharedListShopperRecord>>.Success(null);
+                Result<List<SharedListShopperRecord>>.Success(new List<SharedListShopperRecord>());
+            }
+            else
+            {
+                result = Result<List<SharedListShopperRecord>>.Success(new List<SharedListShopperRecord>());
             }
         }
         catch (Exception ex)
