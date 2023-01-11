@@ -6,6 +6,7 @@ using Pondrop.Service.Interfaces.Services;
 using Pondrop.Service.ShoppingList.Api.Services;
 using Pondrop.Service.ShoppingList.Application.Commands;
 using Pondrop.Service.ShoppingList.Application.Queries;
+using Pondrop.Service.ShoppingList.Domain.Models;
 
 namespace Pondrop.Service.ShoppingList.ApiControllers;
 
@@ -74,7 +75,7 @@ public class ShoppingListController : ControllerBase
                 {
                     ShoppingListId = i!.Id,
                     SharedListShoppers = new List<SharedListShopperCreateRecord>() { new SharedListShopperCreateRecord()
-                    { ListPrivilege = Domain.Enums.ShoppingList.ListPrivilegeType.admin, UserId = new Guid(_userService.CurrentUserId()) } }
+                    { ListPrivilege = Domain.Enums.ShoppingList.ListPrivilegeType.admin, UserId = new Guid(_userService.CurrentUserId()), SortOrder = command.SortOrder } }
                 });
 
                 return await sharedListShopperResult.MatchAsync<IActionResult>(
@@ -86,12 +87,13 @@ public class ShoppingListController : ControllerBase
                              ShoppingListId = i!.Id,
                              SharedListShopperIds = new List<Guid>() { s!.FirstOrDefault().Id }
                          });
-                        
+
                          return await addShopperToShoppingListResult.MatchAsync<IActionResult>(
                              async a =>
                              {
                                  await _mediator.Send(new UpdateShoppingListCheckpointByIdCommand() { Id = a!.Id });
-                                 return StatusCode(StatusCodes.Status201Created, a);
+                                 var shoppingList = await _mediator.Send(new GetShoppingListByIdQuery() { Id = a!.Id });
+                                 return StatusCode(StatusCodes.Status201Created, shoppingList.Value);
                                  i!.SharedListShopperIds.Add(sharedListShopperResult.Value.FirstOrDefault().Id);
                              }, (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
                      }, (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
@@ -106,14 +108,38 @@ public class ShoppingListController : ControllerBase
     public async Task<IActionResult> UpdateShoppingList([FromBody] UpdateShoppingListCommand command)
     {
         var result = await _mediator.Send(command);
+        var resultItems = new List<ShoppingListResponseRecord>();
         return await result.MatchAsync<IActionResult>(
             async items =>
             {
+
                 if (items != null)
                     foreach (var item in items)
-                        await _serviceBusService.SendMessageAsync(new UpdateShoppingListCheckpointByIdCommand() { Id = item!.Id });
+                    {
+                        await _mediator.Send(new UpdateShoppingListCheckpointByIdCommand() { Id = item!.Id });
+                        var sharedListShopperResponse = await _mediator.Send(new GetSharedListShopperByShoppingListIdQuery() { ShoppingListId = item.Id });
+                        var sharedListShopper = sharedListShopperResponse.Value;
+                        var sharedListShopperResult = await _mediator.Send(new UpdateSharedListShopperCommand()
+                        {
+                            ShoppingListId = item!.Id,
+                            SharedListShoppers = new List<SharedListShopperUpdateRecord>() { new SharedListShopperUpdateRecord()
+                    {Id =  sharedListShopper.FirstOrDefault(s => s.UserId == new Guid(_userService.CurrentUserId()))?.Id ?? Guid.Empty, UserId = new Guid(_userService.CurrentUserId()), SortOrder = command.ShoppingLists.FirstOrDefault(s => s.Id == item!.Id)?.SortOrder ?? 0 } }
+                        });
 
-                return new OkObjectResult(items);
+                        await sharedListShopperResult.MatchAsync<IActionResult>(
+                             async s =>
+                             {
+                                 await _mediator.Send(new UpdateSharedListShopperCheckpointByIdCommand() { Id = s!.FirstOrDefault().Id });
+                                 var result = await _mediator.Send(new GetShoppingListByIdQuery() { Id = item!.Id });
+                                 if (result.Value != null)
+                                     resultItems.Add(result.Value);
+                                 return StatusCode(StatusCodes.Status202Accepted);
+                             },
+                             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
+                    }
+
+
+                return new OkObjectResult(resultItems);
             },
             (ex, msg) => Task.FromResult<IActionResult>(new BadRequestObjectResult(msg)));
     }

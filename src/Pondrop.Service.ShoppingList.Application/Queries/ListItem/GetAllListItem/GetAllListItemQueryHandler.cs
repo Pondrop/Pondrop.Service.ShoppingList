@@ -61,29 +61,44 @@ public class GetAllListItemQueryHandler : IRequestHandler<GetAllListItemsQuery, 
 
                 if (_userService.CurrentUserType() == UserType.Shopper)
                 {
-                    var sharedListShopperIdString = string.Join(',', sharedListShoppers.Select(s => $"'{s.Id}'"));
-                    query += $" AND ARRAY_CONTAINS(c.sharedListShopperIds, {sharedListShopperIdString})";
+                    bool isFirst = true;
+                    query += " AND (";
+                    foreach (var sharedListShopper in sharedListShoppers)
+                    {
+                        if (isFirst)
+                        {
+                            query += $"ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                            isFirst = false;
+                        }
+                        else
+                            query += $" OR ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                    }
+                    query += ")";
                 }
 
                 var entities = await _shoppingListCheckpointRepository.QueryAsync(query);
 
-                List<ListItemRecord> responseRecords = null;
+                var responseRecords = new List<ListItemRecord>();
 
-                var entity = entities.FirstOrDefault();
-                if (entity == null)
+                foreach (var entity in entities)
                 {
+                    if (entity == null)
+                    {
 
-                    var errorMessage = $"No ShoppingList found.";
-                    _logger.LogError(errorMessage);
-                    return Result<List<ListItemRecord>?>.Error(errorMessage);
+                        var errorMessage = $"No ShoppingList found.";
+                        _logger.LogError(errorMessage);
+                        return Result<List<ListItemRecord>?>.Error(errorMessage);
+                    }
+
+                    if (entity.ListItemIds.Count > 0)
+                    {
+                        var listItemQuery = $"SELECT * FROM c WHERE c.id in ({string.Join(",", entity.ListItemIds?.Select(s => $"'{s}'").ToList())}) AND c.deletedUtc = null";
+
+                        var listItemEntities = await _checkpointRepository.QueryAsync(listItemQuery);
+
+                        responseRecords.AddRange(_mapper.Map<List<ListItemRecord>>(listItemEntities));
+                    }
                 }
-
-                var listItemQuery = $"SELECT * FROM c WHERE c.id in ({string.Join(",", entity.ListItemIds?.Select(s => $"'{s}'").ToList())}) AND c.deletedUtc = null";
-
-                var listItemEntities = await _checkpointRepository.QueryAsync(listItemQuery);
-
-                responseRecords = _mapper.Map<List<ListItemRecord>>(listItemEntities);
-
                 result = responseRecords is not null ?
                     Result<List<ListItemRecord>>.Success(responseRecords) :
                     Result<List<ListItemRecord>>.Success(new List<ListItemRecord>());

@@ -58,8 +58,19 @@ public class GetSharedListShopperByShoppingListIdQueryHandler : IRequestHandler<
 
                 if (_userService.CurrentUserType() == UserType.Shopper)
                 {
-                    var sharedListShopperIdString = string.Join(',', sharedListShoppers.Select(s => $"'{s.Id}'"));
-                    query += $" AND ARRAY_CONTAINS(c.sharedListShopperIds, {sharedListShopperIdString})";
+                    bool isFirst = true;
+                    query += " AND (";
+                    foreach (var sharedListShopper in sharedListShoppers)
+                    {
+                        if (isFirst)
+                        {
+                            query += $"ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                            isFirst = false;
+                        }
+                        else
+                            query += $" OR ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                    }
+                    query += ")";
                 }
 
                 var entities = await _shoppingListCheckpointRepository.QueryAsync(query);
@@ -69,10 +80,12 @@ public class GetSharedListShopperByShoppingListIdQueryHandler : IRequestHandler<
                 {
                     foreach (var entity in entities)
                     {
-
-                        var sharedListShopperQuery = $"SELECT * FROM c WHERE c.deletedUtc = null AND c.id in ({string.Join(",", entity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})";
-                        var entityShoppers = await _checkpointRepository.QueryAsync(sharedListShopperQuery);
-                        responseRecords = _mapper.Map<List<SharedListShopperRecord>>(entityShoppers);
+                        if (entity.SharedListShopperIds.Count > 0)
+                        {
+                            var sharedListShopperQuery = $"SELECT * FROM c WHERE c.deletedUtc = null AND c.id in ({string.Join(",", entity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})";
+                            var entityShoppers = await _checkpointRepository.QueryAsync(sharedListShopperQuery);
+                            responseRecords = _mapper.Map<List<SharedListShopperRecord>>(entityShoppers);
+                        }
                     }
                 }
 

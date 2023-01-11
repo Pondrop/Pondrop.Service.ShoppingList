@@ -61,8 +61,19 @@ public class GetListItemByIdQueryHandler : IRequestHandler<GetListItemByIdQuery,
 
                 if (_userService.CurrentUserType() == UserType.Shopper)
                 {
-                    var sharedListShopperIdString = string.Join(',', sharedListShoppers.Select(s => $"'{s.Id}'"));
-                    query += $" AND ARRAY_CONTAINS(c.sharedListShopperIds, {sharedListShopperIdString})";
+                    bool isFirst = true;
+                    query += " AND (";
+                    foreach (var sharedListShopper in sharedListShoppers)
+                    {
+                        if (isFirst)
+                        {
+                            query += $"ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                            isFirst = false;
+                        }
+                        else
+                            query += $" OR ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                    }
+                    query += ")";
                 }
 
                 var entities = await _shoppingListCheckpointRepository.QueryAsync(query);

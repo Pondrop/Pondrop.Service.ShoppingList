@@ -58,8 +58,19 @@ public class GetAllShoppingListsQueryHandler : IRequestHandler<GetAllShoppingLis
 
                 if (_userService.CurrentUserType() == UserType.Shopper)
                 {
-                    var sharedListShopperIdString = string.Join(',', sharedListShoppers.Select(s => $"'{s.Id}'"));
-                    query += $" AND ARRAY_CONTAINS(c.sharedListShopperIds, {sharedListShopperIdString})";
+                    bool isFirst = true;
+                    query += " AND (";
+                    foreach (var sharedListShopper in sharedListShoppers)
+                    {
+                        if (isFirst)
+                        {
+                            query += $"ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                            isFirst = false;
+                        }
+                        else
+                            query += $" OR ARRAY_CONTAINS(c.sharedListShopperIds, '{sharedListShopper.Id}')";
+                    }
+                    query += ")";
                 }
 
                 var entities = await _checkpointRepository.QueryAsync(query);
@@ -69,27 +80,28 @@ public class GetAllShoppingListsQueryHandler : IRequestHandler<GetAllShoppingLis
                 {
                     foreach (var entity in entities)
                     {
-
-                        var sharedListShopperQuery = $"SELECT * FROM c WHERE c.deletedUtc = null AND c.id in ({string.Join(",", entity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})";
-                        var entityShoppers = await _sharedListShopperCheckpointRepository.QueryAsync(sharedListShopperQuery);
-                        var entityShopperRecords = _mapper.Map<List<SharedListShopperRecord>>(entityShoppers);
-                        var entityShopperResponseRecords = _mapper.Map<List<SharedListShopperResponseRecord>>(entityShoppers);
-                        var userShopper = entityShopperRecords.FirstOrDefault(s => s.UserId.ToString() == _userService.CurrentUserId());
-
-                        //SharedListShopperEntity? sharedListShopper = null;
-                        //foreach (var sharedListShopperId in entity!.SharedListShopperIds)
-                        //{
-                        //    sharedListShopper = sharedListShoppers.First(s => s.Id == sharedListShopperId);
-                        //    if (sharedListShopper != null)
-                        //        break;
-                        //}
-
-                        var responseRecord = _mapper.Map<ShoppingListResponseRecord>(entity) with
+                        if (entity.SharedListShopperIds.Count > 0)
                         {
-                            SharedListShoppers = entityShopperResponseRecords,
-                            SortOrder = userShopper?.SortOrder ?? 0
-                        };
-                        responseRecords.Add(responseRecord);
+                            var sharedListShopperQuery = $"SELECT * FROM c WHERE c.deletedUtc = null AND c.id in ({string.Join(",", entity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})";
+                            var entityShoppers = await _sharedListShopperCheckpointRepository.QueryAsync(sharedListShopperQuery);
+                            var entityShopperRecords = _mapper.Map<List<SharedListShopperRecord>>(entityShoppers);
+                            var entityShopperResponseRecords = _mapper.Map<List<SharedListShopperResponseRecord>>(entityShoppers);
+                            var userShopper = entityShopperRecords.FirstOrDefault(s => s.UserId.ToString() == _userService.CurrentUserId());
+                            //SharedListShopperEntity? sharedListShopper = null;
+                            //foreach (var sharedListShopperId in entity!.SharedListShopperIds)
+                            //{
+                            //    sharedListShopper = sharedListShoppers.First(s => s.Id == sharedListShopperId);
+                            //    if (sharedListShopper != null)
+                            //        break;
+                            //}
+
+                            var responseRecord = _mapper.Map<ShoppingListResponseRecord>(entity) with
+                            {
+                                SharedListShoppers = entityShopperResponseRecords,
+                                SortOrder = userShopper?.SortOrder ?? 0
+                            };
+                            responseRecords.Add(responseRecord);
+                        }
                     }
                 }
 

@@ -14,11 +14,13 @@ public class UpdateShoppingListCommand : IRequest<Result<List<ShoppingListRecord
 
 public record ShoppingListItemRecord(
     Guid Id,
-    string Name)
+    string Name,
+    int SortOrder)
 {
     public ShoppingListItemRecord() : this(
         Guid.Empty,
-        string.Empty)
+        string.Empty,
+        0)
     {
     }
 }
