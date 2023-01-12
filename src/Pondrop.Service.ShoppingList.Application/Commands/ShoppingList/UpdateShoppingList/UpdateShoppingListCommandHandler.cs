@@ -67,7 +67,7 @@ public class UpdateShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
                             shoppingList.Id,
                             shoppingList.Name,
                             shoppingListEntity.ShoppingListType,
-                        shoppingListEntity.SelectedStoreIds,
+                        shoppingList.Stores,
                         shoppingListEntity.SharedListShopperIds,
                         shoppingListEntity.ListItemIds);
                         var createdBy = _userService.CurrentUserName();

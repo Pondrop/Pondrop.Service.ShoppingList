@@ -80,7 +80,7 @@ public class GetAllShoppingListsQueryHandler : IRequestHandler<GetAllShoppingLis
                 {
                     foreach (var entity in entities)
                     {
-                        if (entity.SharedListShopperIds.Count > 0)
+                        if (entity.SharedListShopperIds != null && entity.SharedListShopperIds.Count > 0)
                         {
                             var sharedListShopperQuery = $"SELECT * FROM c WHERE c.deletedUtc = null AND c.id in ({string.Join(",", entity.SharedListShopperIds?.Select(s => $"'{s}'").ToList())})";
                             var entityShoppers = await _sharedListShopperCheckpointRepository.QueryAsync(sharedListShopperQuery);

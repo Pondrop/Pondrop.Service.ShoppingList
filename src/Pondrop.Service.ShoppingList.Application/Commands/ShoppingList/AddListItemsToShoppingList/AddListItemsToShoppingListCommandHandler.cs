@@ -58,13 +58,14 @@ public class AddListItemToShoppingListCommandHandler : DirtyCommandHandler<Shopp
 
             if (shoppingListEntity is not null)
             {
-                shoppingListEntity.ListItemIds.AddRange(command.ListItemIds);
+                if (shoppingListEntity.ListItemIds != null)
+                    shoppingListEntity.ListItemIds.AddRange(command.ListItemIds);
 
                 var evtPayload = new UpdateShoppingList(
                     shoppingListEntity.Id,
                     shoppingListEntity.Name,
                     shoppingListEntity.ShoppingListType,
-                    shoppingListEntity.SelectedStoreIds,
+                    shoppingListEntity.Stores,
                     shoppingListEntity.SharedListShopperIds,
                     shoppingListEntity.ListItemIds);
                 var createdBy = _userService.CurrentUserName();

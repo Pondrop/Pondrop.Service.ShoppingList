@@ -14,11 +14,13 @@ public class UpdateListItemCommand : IRequest<Result<List<ListItemRecord>>>
 public record ListItemUpdateRecord(
     Guid Id,
     int SortOrder,
+    Guid? StoreId,
     bool Checked)
 {
     public ListItemUpdateRecord() : this(
         Guid.Empty,
-        0, 
+        0,
+        null,
         false)
     {
     }

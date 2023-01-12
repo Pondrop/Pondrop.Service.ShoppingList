@@ -53,7 +53,7 @@ public class CreateShoppingListCommandHandler : DirtyCommandHandler<ShoppingList
             var ShoppingListEntity = new ShoppingListEntity(
                 command.Name,
                 command.ShoppingListType,
-                command.SelectedStoreIds,
+                command.Stores,
                 new List<Guid>(),
                 command.ListItemIds,
                 _userService.CurrentUserName());

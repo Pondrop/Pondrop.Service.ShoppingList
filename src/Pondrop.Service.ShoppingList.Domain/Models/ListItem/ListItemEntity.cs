@@ -19,7 +19,7 @@ public record ListItemEntity : EventEntity
         ItemNetSize = 0;
         ItemUOM = string.Empty;
         SelectedPreferenceIds = new List<Guid>();
-        SelectedProductId = Guid.Empty;
+        SelectedProductId = null;
         StoreId = null;
         SortOrder = 0;
         Checked = false;
@@ -33,7 +33,7 @@ public record ListItemEntity : EventEntity
         }
     }
 
-    public ListItemEntity(string itemTitle, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid selectedProductId, Guid? storeId, int sortOrder, bool @checked, string createdBy) : this()
+    public ListItemEntity(string itemTitle, Guid selectedCategoryId, int quantity, double itemNetSize, string itemUOM, List<Guid> selectedPreferenceIds, Guid? selectedProductId, Guid? storeId, int sortOrder, bool @checked, string createdBy) : this()
     {
         var create = new CreateListItem(Guid.NewGuid(), itemTitle, selectedCategoryId, quantity, itemNetSize, itemUOM, selectedPreferenceIds, selectedProductId, storeId, sortOrder, @checked);
         Apply(create, createdBy);
@@ -58,7 +58,7 @@ public record ListItemEntity : EventEntity
     public List<Guid> SelectedPreferenceIds { get; private set; }
 
     [JsonProperty(PropertyName = "selectedProductId")]
-    public Guid SelectedProductId { get; private set; }
+    public Guid? SelectedProductId { get; private set; }
 
     [JsonProperty(PropertyName = "storeId")]
     public Guid? StoreId { get; private set; }

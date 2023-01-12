@@ -64,7 +64,7 @@ public class AddSharedListShoppersToShoppingListCommandHandler : DirtyCommandHan
                     shoppingListEntity.Id,
                     shoppingListEntity.Name,
                     shoppingListEntity.ShoppingListType,
-                    shoppingListEntity.SelectedStoreIds,
+                    shoppingListEntity.Stores,
                     shoppingListEntity.SharedListShopperIds,
                     shoppingListEntity.ListItemIds);
                 var createdBy = _userService.CurrentUserName();

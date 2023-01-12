@@ -17,7 +17,7 @@ public record ListItemCreateRecord(
     double ItemNetSize,
     string ItemUOM,
     List<Guid> SelectedPreferenceIds,
-    Guid SelectedProductId,
+    Guid? SelectedProductId,
     Guid? StoreId,
     int SortOrder,
     bool Checked)
@@ -29,7 +29,7 @@ public record ListItemCreateRecord(
         0,
         string.Empty,
         new List<Guid>(),
-        Guid.Empty,
+        null,
         null,
         0,
         false)

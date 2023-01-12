@@ -73,7 +73,7 @@ public class UpdateListItemCommandHandler : DirtyCommandHandler<ListItemEntity, 
                         listItemEntity.ItemUOM,
                         listItemEntity.SelectedPreferenceIds,
                         listItemEntity.SelectedProductId,
-                        listItemEntity.StoreId,
+                        listItem.StoreId,
                         listItem.SortOrder,
                         listItem.Checked
                         );

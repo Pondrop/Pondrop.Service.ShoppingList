@@ -79,7 +79,7 @@ public class GetListItemByIdQueryHandler : IRequestHandler<GetListItemByIdQuery,
                 var entities = await _shoppingListCheckpointRepository.QueryAsync(query);
 
                 var entity = entities.FirstOrDefault();
-                if (entity == null && !entity.ListItemIds.Any(l => l == request.Id))
+                if (entity == null && entity.ListItemIds != null && !entity.ListItemIds.Any(l => l == request.Id))
                 {
 
                     var errorMessage = $"No ShoppingList found.";

@@ -58,34 +58,37 @@ public class RemoveListItemToShoppingListCommandHandler : DirtyCommandHandler<Sh
 
             if (shoppingListEntity is not null)
             {
-                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() ||_userService.CurrentUserType() == Service.Models.User.UserType.Admin)
+                if (shoppingListEntity.CreatedBy == _userService.CurrentUserName() || _userService.CurrentUserType() == Service.Models.User.UserType.Admin)
                 {
                     foreach (var listItem in command.ListItemIds)
-                    shoppingListEntity.ListItemIds.Remove(listItem);
+                    {
+                        if (shoppingListEntity.ListItemIds != null)
+                            shoppingListEntity.ListItemIds.Remove(listItem);
+                    }
 
-                var evtPayload = new UpdateShoppingList(
-                    shoppingListEntity.Id,
-                    shoppingListEntity.Name,
-                    shoppingListEntity.ShoppingListType,
-                    shoppingListEntity.SelectedStoreIds,
-                    shoppingListEntity.SharedListShopperIds,
-                    shoppingListEntity.ListItemIds);
-                var createdBy = _userService.CurrentUserName();
+                    var evtPayload = new UpdateShoppingList(
+                        shoppingListEntity.Id,
+                        shoppingListEntity.Name,
+                        shoppingListEntity.ShoppingListType,
+                        shoppingListEntity.Stores,
+                        shoppingListEntity.SharedListShopperIds,
+                        shoppingListEntity.ListItemIds);
+                    var createdBy = _userService.CurrentUserName();
 
-                var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                    var success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
 
-                if (!success)
-                {
-                    await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
-                    success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
-                }
+                    if (!success)
+                    {
+                        await _shoppingListCheckpointRepository.FastForwardAsync(shoppingListEntity);
+                        success = await UpdateStreamAsync(shoppingListEntity, evtPayload, createdBy);
+                    }
 
-                await Task.WhenAll(
-                    InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
+                    await Task.WhenAll(
+                        InvokeDaprMethods(shoppingListEntity.Id, shoppingListEntity.GetEvents(shoppingListEntity.AtSequence)));
 
-                result = success
-                    ? Result<ShoppingListRecord>.Success(_mapper.Map<ShoppingListRecord>(shoppingListEntity))
-                    : Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
+                    result = success
+                        ? Result<ShoppingListRecord>.Success(_mapper.Map<ShoppingListRecord>(shoppingListEntity))
+                        : Result<ShoppingListRecord>.Error(FailedToCreateMessage(command));
                 }
                 else
                 {

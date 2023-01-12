@@ -9,7 +9,7 @@ public record UpdateListItem(
     double ItemNetSize,
     string ItemUOM,
     List<Guid> SelectedPreferenceIds,
-    Guid SelectedProductId,
+    Guid? SelectedProductId,
     Guid? StoreId,
     int SortOrder,
     bool Checked

@@ -73,7 +73,7 @@ public class RemoveSharedListShopperToShoppingListCommandHandler : DirtyCommandH
                             shoppingListEntity.Id,
                             shoppingListEntity.Name,
                             shoppingListEntity.ShoppingListType,
-                            shoppingListEntity.SelectedStoreIds,
+                            shoppingListEntity.Stores,
                             shoppingListEntity.SharedListShopperIds,
                             shoppingListEntity.ListItemIds);
                     }

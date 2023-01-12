@@ -88,7 +88,7 @@ public class GetListItemByShoppingListIdQueryHandler : IRequestHandler<GetListIt
                     _logger.LogError(errorMessage);
                     return Result<List<ListItemRecord>?>.Error(errorMessage);
                 }
-                if (entity.ListItemIds.Count > 0)
+                if (entity.ListItemIds != null && entity.ListItemIds.Count > 0)
                 {
                     var listItemQuery = $"SELECT * FROM c WHERE c.id in ({string.Join(",", entity.ListItemIds?.Select(s => $"'{s}'").ToList())}) AND c.deletedUtc = null";
 

@@ -14,7 +14,7 @@ public record ShoppingListEntity : EventEntity
         Id = Guid.Empty;
         Name = string.Empty;
         ShoppingListType = Enums.ShoppingList.ShoppingListType.unknown;
-        SelectedStoreIds = new List<Guid>();
+        Stores = new List<ShoppingListStoreRecord>();
         ListItemIds = new List<Guid>();
         SharedListShopperIds = new List<Guid>();
     }
@@ -27,9 +27,9 @@ public record ShoppingListEntity : EventEntity
         }
     }
 
-    public ShoppingListEntity(string name, ShoppingListType? shoppingListType, List<Guid>? selectedStoreIds, List<Guid>? sharedListShopperIds, List<Guid>? listItemIds,string createdBy) : this()
+    public ShoppingListEntity(string name, ShoppingListType? shoppingListType, List<ShoppingListStoreRecord>? stores, List<Guid>? sharedListShopperIds, List<Guid>? listItemIds,string createdBy) : this()
     {
-        var create = new CreateShoppingList(Guid.NewGuid(), name, shoppingListType, selectedStoreIds, sharedListShopperIds, listItemIds);
+        var create = new CreateShoppingList(Guid.NewGuid(), name, shoppingListType, stores, sharedListShopperIds, listItemIds);
         Apply(create, createdBy);
     }
 
@@ -39,8 +39,8 @@ public record ShoppingListEntity : EventEntity
     [JsonProperty(PropertyName = "shoppingListType")]
     public ShoppingListType? ShoppingListType { get; private set; }
 
-    [JsonProperty(PropertyName = "selectedStoreIds")]
-    public List<Guid>? SelectedStoreIds { get; private set; }
+    [JsonProperty(PropertyName = "stores")]
+    public List<ShoppingListStoreRecord>? Stores { get; private set; }
 
     [JsonProperty(PropertyName = "sharedListShopperIds")]
     public List<Guid>? SharedListShopperIds { get; private set; }
@@ -90,7 +90,7 @@ public record ShoppingListEntity : EventEntity
         Id = create.Id;
         Name = create.Name;
         ShoppingListType = create.ShoppingListType;
-        SelectedStoreIds = create.SelectedStoreIds;
+        Stores = create.Stores;
         SharedListShopperIds = create.SharedListShopperIds;
         ListItemIds = create.ListItemIds;
 
@@ -102,19 +102,19 @@ public record ShoppingListEntity : EventEntity
     {
         var oldName = Name;
         var oldShoppingListType = ShoppingListType;
-        var oldSelectedStoreIds = SelectedStoreIds;
+        var oldStores = Stores;
         var oldSharedListShopperIds = SharedListShopperIds;
         var oldListItemIds = ListItemIds;
 
         Name = update.Name;
         ShoppingListType = update.ShoppingListType;
-        SelectedStoreIds = update.SelectedStoreIds;
+        Stores = update.Stores;
         SharedListShopperIds = update.SharedListShopperIds;
         ListItemIds = update.ListItemIds;
 
         if (oldName != Name ||
             oldShoppingListType != ShoppingListType ||
-            oldSelectedStoreIds != SelectedStoreIds ||
+            oldStores != Stores ||
             oldSharedListShopperIds != SharedListShopperIds ||
             oldListItemIds != ListItemIds)
         {
